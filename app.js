@@ -15,6 +15,7 @@ app.use(bodyParser.json())
 if(process.env.NODE_ENV==='production'){
 	app.use(express.static(__dirname+"/build"))
 	app.get("*", (req, res) => {
+		console.log(res);
 		res.sendFile(path.join(__dirname+"/build/index.html"))
 	})
 }
@@ -29,7 +30,7 @@ messages = {}
 timeOnline = {}
 
 io.on('connection', (socket) => {
-
+	console.log("connected")
 	socket.on('join-call', (path) => {
 		if(connections[path] === undefined){
 			connections[path] = []
