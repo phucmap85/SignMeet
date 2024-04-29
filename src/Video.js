@@ -20,7 +20,7 @@ import Modal from 'react-bootstrap/Modal'
 import 'bootstrap/dist/css/bootstrap.css'
 import "./Video.css"
 
-const server_url = process.env.NODE_ENV === 'production' ? 'ws://adoring-sea-27008.pktriot.net:22619' : "http://localhost:4001"
+const server_url = process.env.NODE_ENV === 'production' ? 'wss://adoring-sea-27008.pktriot.net:22619' : "http://localhost:4001"
 
 var connections = {}
 const peerConnectionConfig = {
