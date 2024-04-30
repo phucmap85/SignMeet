@@ -2,7 +2,9 @@ body {
     margin: 0;
 }
 
-.flex-container {
+.video-container {
+    margin: 0;
+    padding: 0;
     height: calc(100% - 150px);
     width: 100%;
     /* margin: 0 auto; */
@@ -12,7 +14,7 @@ body {
     justify-content: center;
 }
 
-.container {
+.main-content {
     height: 100vh;
     width: 100vw;
     max-width: 100vw;
@@ -23,17 +25,119 @@ body {
     text-align: center;
 }
 
-.div-send-msg {
+.chat-send-msg {
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
 }
 
-.btn-down {
+.username-page {
+    background: white;
+    width: 30%;
+    height: auto;
+    padding: 20px;
+    min-width: 400px;
+    text-align: center;
+    margin: auto;
+    margin-top: 50px;
+    justify-content: center;
+}
+
+video {
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
+    -moz-transform: rotateY(180deg);
+}
+
+.username-page .title {
+    margin: 0;
+    font-weight: bold;
+    padding-right: 50px;
+}
+
+.username-page .button {
+    margin: 20px;
+}
+
+.username-page .video-wrapper {
+    justify-content: center;
+    text-align: center;
+    padding-top: 40px;
+}
+
+.username-page video {
+    border-style: solid;
+    border-color: #bdbdbd;
+    object-fit: fill;
+    width: 60%;
+    height: 30%;
+}
+
+.bottom-btn {
     z-index: 2;
-    position: fixed; 
+    position: fixed;
     bottom: 0px;
     width: 100%;
     height: auto;
+    background-color: whitesmoke;
+    color: whitesmoke;
+    text-align: center;
+}
+
+#bot-btn {
+    color: #424242;
+}
+
+.bottom-btn .leave {
+    color: #f44336 !important;
+}
+
+.chat-modal {
+    z-index: 999999;
+}
+
+.chat-body {
+    overflow: auto;
+    overflow-y: auto;
+    height: 400px;
+    text-align: left;
+}
+
+.chat-body .wrapper {
+    text-align: left;
+}
+
+.chat-body .content {
+    word-break: break-all;
+}
+
+.video-container video {
+    border-style: solid;
+    border-color: #bdbdbd;
+    margin: 10px;
+    object-fit: fill;
+    width: 100%;
+    height: 100%
+}
+
+.video-container .username {
+    z-index: 10;
+    color: red;
+    font-size: 2em;
+}
+
+.video-container .user {
+    position: relative;
+}
+
+.video-container .user .user-name{
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    border-radius: 5px;
+    padding: 5px;
+    height: 2em;
+    color: white;
+    background: black;
 }
