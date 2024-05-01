@@ -7,6 +7,7 @@ import * as tf from '@tensorflow/tfjs';
 import Webcam from 'react-webcam';
 import { reshape } from 'mathjs';
 
+
 function indexOfMax(arr) {
     if (arr.length === 0) return -1;
 
@@ -149,8 +150,8 @@ function UserVideo() {
 
     return (
         <div>
-            <Webcam ref={webcamRef} width={1280} height={720} />
-            <canvas ref={canvasRef} />
+            <Webcam ref={webcamRef} width={1280} height={720} hidden/>
+            <canvas ref={canvasRef} style={{transform: "rotateY(180deg)"}}/>
         </div>
     );
 }

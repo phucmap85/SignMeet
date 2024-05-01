@@ -10,6 +10,15 @@ import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import CallEndIcon from '@material-ui/icons/CallEnd'
 import ChatIcon from '@material-ui/icons/Chat'
+import { useRef, useEffect, createRef } from 'react';
+import { Holistic } from '@mediapipe/holistic';
+import * as hlt from '@mediapipe/holistic';
+import * as cam from '@mediapipe/camera_utils';
+import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils'
+import * as tf from '@tensorflow/tfjs';
+import Webcam from 'react-webcam';
+import { reshape } from 'mathjs';
+
 
 import { message } from 'antd'
 import 'antd/dist/antd.css'
@@ -20,6 +29,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import "./Video.css"
 
 import ChromeOnly from './web_components/chromeOnly'
+import UserVideo from './web_components/UserVideo'
 
 const server_url = process.env.NODE_ENV === 'production' ? 'https://adoring-sea-27008.pktriot.net' : "http://localhost:4001"
 
@@ -38,7 +48,7 @@ class Video extends Component {
 	constructor(props) {
 		super(props)
 
-		this.localVideoref = React.createRef()
+		this.localVideoref = createRef()
 
 		this.videoAvailable = false
 		this.audioAvailable = false
@@ -56,6 +66,7 @@ class Video extends Component {
 			username: null
 		}
 		connections = {}
+		this.camera = null
 
 		this.getPermissions()
 	}
@@ -463,7 +474,7 @@ class Video extends Component {
 						</div>
 
 						<div className='video-wrapper'>
-							<video id="user-video" ref={this.localVideoref} autoPlay muted></video>
+							<video id="user-video" ref={this.localVideoref} autoPlay muted> {console.log(this.localVideoref)}</video>
 						</div>
 					</div>
 					:
@@ -521,9 +532,10 @@ class Video extends Component {
 							</div>
 
 							<Row id="main" className="video-container">
+								<UserVideo></UserVideo>
 								{/* <div className='user'> */}
-									<video id="user-video" ref={this.localVideoref} autoPlay muted></video>
-									{/* <a className='user-name'>{this.state.username}</a>
+								{/* <video id="user-video" ref={this.localVideoref} autoPlay muted></video> */}
+								{/* <a className='user-name'>{this.state.username}</a>
 								</div> */}
 							</Row>
 						</div>
