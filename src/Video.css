@@ -44,12 +44,6 @@ body {
     justify-content: center;
 }
 
-video {
-    transform: rotateY(180deg);
-    -webkit-transform: rotateY(180deg);
-    -moz-transform: rotateY(180deg);
-}
-
 .username-page .title {
     margin: 0;
     font-weight: bold;
@@ -140,4 +134,10 @@ video {
     height: 2em;
     color: white;
     background: black;
+}
+
+#user-video {
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
+    -moz-transform: rotateY(180deg);
 }

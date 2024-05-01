@@ -270,7 +270,7 @@ class Video extends Component {
 			width = String(100 / elms) + "%"
 		}
 
-		let videos = main.querySelectorAll("video")
+		let videos = main.querySelectorAll("#user-video")
 		for (let a = 0; a < videos.length; ++a) {
 			videos[a].style.minWidth = minWidth
 			videos[a].style.minHeight = minHeight
@@ -336,6 +336,7 @@ class Video extends Component {
 							video.style.setProperty("width", cssMesure.width)
 							video.style.setProperty("height", cssMesure.height)
 							video.setAttribute('data-socket', socketListId)
+							video.setAttribute('id', "user-video");
 							video.srcObject = event.stream
 							video.autoplay = true
 							video.playsinline = true

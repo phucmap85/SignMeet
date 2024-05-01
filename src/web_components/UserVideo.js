@@ -6,6 +6,7 @@ import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils'
 import * as tf from '@tensorflow/tfjs';
 import Webcam from 'react-webcam';
 import { reshape } from 'mathjs';
+import './UserVideo.css';
 
 
 function indexOfMax(arr) {
@@ -149,9 +150,9 @@ function UserVideo() {
     }, [])
 
     return (
-        <div>
-            <Webcam ref={webcamRef} width={1280} height={720} hidden/>
-            <canvas ref={canvasRef} style={{transform: "rotateY(180deg)"}}/>
+        <div id='user-video'>
+            <Webcam ref={webcamRef} width={1280} height={720} hidden style={{position:"absolute"}}/>
+            <canvas  ref={canvasRef}/>
         </div>
     );
 }
