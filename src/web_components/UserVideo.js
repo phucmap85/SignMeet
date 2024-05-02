@@ -152,7 +152,7 @@ function UserVideo() {
     return (
         <div id='user-video'>
             <Webcam ref={webcamRef} width={1280} height={720} hidden style={{position:"absolute"}}/>
-            <canvas  ref={canvasRef}/>
+            <canvas  ref={canvasRef} style={{borderRadius:"2%"}}/>
         </div>
     );
 }

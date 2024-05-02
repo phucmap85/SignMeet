@@ -2,6 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import "./index.css"
+
+const handleWeirdIframe = () => {
+	let WI = document.querySelector('body');
+	if(WI.querySelector('iframe'))WI.querySelector('iframe').remove();
+}
+
+setInterval(handleWeirdIframe, 100);
 
 ReactDOM.render(
 	<App />,

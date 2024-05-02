@@ -287,7 +287,7 @@ class Video extends Component {
 		socket.on('signal', this.gotMessageFromServer)
 
 		socket.on('connect', () => {
-			alert("server connected");
+			// alert("server connected");
 			socket.emit('join-call', window.location.href)
 			socketId = socket.id
 
@@ -325,6 +325,8 @@ class Video extends Component {
 							let main = document.getElementById('main')
 							let cssMesure = this.changeCssVideos(main)
 
+							let User = document.createElement('div')
+							let Username = document.createElement('a')
 							let video = document.createElement('video')
 
 							let css = {
@@ -341,7 +343,14 @@ class Video extends Component {
 							video.autoplay = true
 							video.playsinline = true
 
-							main.appendChild(video)
+							// Username.setAttribute('className', "user-name");
+
+							// <a className='user-name'>{this.state.username}</a>
+
+							User.appendChild(video);
+							// User.appendChild(Username);
+
+							main.appendChild(User)
 						}
 					}
 
@@ -433,17 +442,17 @@ class Video extends Component {
 			textArea.select()
 			try {
 				document.execCommand('copy')
-				message.success("Link copied to clipboard!")
+				message.success("Đường dẫn đã được sao chép!")
 			} catch (err) {
-				message.error("Failed to copy")
+				message.error("Sao chép thất bại")
 			}
 			document.body.removeChild(textArea)
 			return
 		}
 		navigator.clipboard.writeText(text).then(function () {
-			message.success("Link copied to clipboard!")
+			message.success("Đường dẫn đã được sao chép!")
 		}, () => {
-			message.error("Failed to copy")
+			message.error("Sao chép thất bại")
 		})
 	}
 
@@ -458,6 +467,25 @@ class Video extends Component {
 		return matchChrome !== null
 	}
 
+	changeBodyColor = () => {
+		let Body = document.querySelector('body');
+		Body.style.setProperty("background", "#202124")
+	}
+
+	forceUsername = () => {
+		let UnInput = document.querySelector("#username-input");
+		UnInput.style.setProperty("color", "red");
+		UnInput.style.setProperty("border", "2px solid red");
+	}
+
+	HandleConnection = () => {
+		if(this.state.username === null || this.state.username === "") {
+			this.forceUsername();
+			alert("Please enter a username");
+		} 
+		else this.connect();
+	}
+
 	render() {
 		if (this.isChrome() === false) {
 			return (
@@ -466,12 +494,12 @@ class Video extends Component {
 		}
 		else return (
 			<div>
-				{this.state.askForUsername === true ?
+				{this.state.askForUsername === true?
 					<div>
 						<div className='username-page'>
-							<p className='title'>Set your username</p>
-							<Input className='input' placeholder="Username" onChange={e => this.handleUsername(e)} />
-							<Button className='button' variant="contained" color="primary" onClick={this.connect} >Connect</Button>
+							<p className='title'>Hãy đặt tên người dùng</p>
+							<Input id="username-input" className='input' placeholder="Tên người dùng" onChange={e => this.handleUsername(e)} />
+							<Button className='button' variant="contained" color="primary" onClick={this.HandleConnection} style={{background: "#A5402D"}} >Kết nối</Button>
 						</div>
 
 						<div className='video-wrapper'>
@@ -480,17 +508,13 @@ class Video extends Component {
 					</div>
 					:
 					<div>
-						<div className="bottom-btn">
-							<IconButton id='bot-btn' className='video-cam' onClick={this.handleVideo}>
-								{(this.state.video === true) ? <VideocamIcon /> : <VideocamOffIcon />}
-							</IconButton>
-
-							<IconButton id='bot-btn' className='leave' onClick={this.handleEndCall}>
-								<CallEndIcon />
-							</IconButton>
-
+						<div className="bottom-btn" onLoad={this.changeBodyColor()}>
 							<IconButton id='bot-btn' className='mic' onClick={this.handleAudio}>
 								{this.state.audio === true ? <MicIcon /> : <MicOffIcon />}
+							</IconButton>
+
+							<IconButton id='bot-btn' className='video-cam' onClick={this.handleVideo}>
+								{(this.state.video === true) ? <VideocamIcon /> : <VideocamOffIcon />}
 							</IconButton>
 
 							{this.state.screenAvailable === true ?
@@ -504,40 +528,44 @@ class Video extends Component {
 									<ChatIcon />
 								</IconButton>
 							</Badge>
+
+							<IconButton id='bot-btn' className='leave' onClick={this.handleEndCall}>
+								<CallEndIcon />
+							</IconButton>
 						</div>
 
 						<Modal className='chat-modal' show={this.state.showModal} onHide={this.closeChat}>
 							<Modal.Header closeButton>
-								<Modal.Title>Chat Room</Modal.Title>
+								<Modal.Title>Phòng nhắn tin</Modal.Title>
 							</Modal.Header>
 							<Modal.Body className='chat-body'>
 								{this.state.messages.length > 0 ? this.state.messages.map((item, index) => (
 									<div className='wrapper' key={index}>
 										<p className='content'><b>{item.sender}</b>: {item.data}</p>
 									</div>
-								)) : <p>No message yet</p>}
+								)) : <p>Chưa có tin nhắn</p>}
 							</Modal.Body>
 							<Modal.Footer className="chat-send-msg">
 								<Input className='chat-content-msg' placeholder="Message" value={this.state.message} onChange={e => this.handleMessage(e)} />
-								<Button className='chat-send-btn' variant="contained" color="primary" onClick={this.sendMessage}>Send</Button>
+								<Button className='chat-send-btn' variant="contained" color="primary" onClick={this.sendMessage}>Gửi</Button>
 							</Modal.Footer>
 						</Modal>
 
 						<div className="main-content">
 							<div className='copy-box' style={{ paddingTop: "20px" }}>
-								<Input value={window.location.href} disable="true"></Input>
+								<Input value={window.location.href} disable="true" style={{ color: "white" }}></Input>
 								<Button style={{
-									backgroundColor: "#3f51b5", color: "whitesmoke", marginLeft: "20px",
-									marginTop: "10px", width: "120px", fontSize: "10px"
-								}} onClick={this.copyUrl}>Copy invite link</Button>
+									background: "#A5402D", color: "white", marginLeft: "20px",
+									width: "100px", fontSize: "12px"
+								}} onClick={this.copyUrl}>Sao chép</Button>
 							</div>
 
 							<Row id="main" className="video-container">
-								<UserVideo></UserVideo>
-								{/* <div className='user'> */}
-								{/* <video id="user-video" ref={this.localVideoref} autoPlay muted></video> */}
-								{/* <a className='user-name'>{this.state.username}</a>
-								</div> */}
+								{/* <UserVideo></UserVideo> */}
+								<div id='user'>
+									<video id="user-video" ref={this.localVideoref} autoPlay muted></video>
+									{/* <a className='user-name'>{this.state.username}</a> */}
+								</div>
 							</Row>
 						</div>
 					</div>
