@@ -1,7 +1,7 @@
 .video-container {
     margin: 0;
     padding: 0;
-    height: calc(100% - 150px);
+    height: calc(100% - 140px);
     width: 100%;
     /* margin: 0 auto; */
     display: flex;
@@ -31,7 +31,7 @@
 .username-page {
 	font-family: "Inter", sans-serif;
     background: whitesmoke;
-    width: 30%;
+    width: 40%;
     border-radius: 3%;
     color: black;
     height: auto;
@@ -78,7 +78,7 @@
     display: flex;
     bottom: 0px;
     width: 100%;
-    height: auto;
+    height: 80px;
     text-align: center;
 }
 
@@ -124,8 +124,6 @@
 }
 
 .video-container video {
-    margin: 10px;
-    object-fit: fill;
     width: 100%;
     height: 100%
 }
@@ -137,7 +135,11 @@
 }
 
 .video-container #user {
+    padding: 10px;
     position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #user .user-name{
@@ -155,5 +157,38 @@
     border-radius: 2%;
 }
 
+.switch {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+}
 
+#caption-canvas {
+	z-index: 100000;
+	font-family: 'Be Vietnam Pro', sans-serif;
+	display: inline-block;
+	position: absolute;
+	text-align: center;
+	;
+	/* padding: 5px 10px; */
+	top: 80vh;
+	left: 30vw;
+	max-width: 80%;
+	word-wrap: break-word;
+	/* IE 5.5-7 */
+	white-space: -moz-pre-wrap;
+	/* Firefox 1.0-2.0 */
+	white-space: pre-wrap;
+	/* current browsers */
+	/* backdrop-filter: blur(10px); */
+	/* opacity: 60%; */
+	background: transparent;
+	font-size: 2em !important;
+	color: white;
+}
 
+#caption-text {
+	padding: 5px 10px;
+	background: black;
+}

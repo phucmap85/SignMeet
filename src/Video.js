@@ -10,6 +10,9 @@ import ScreenShareIcon from '@material-ui/icons/ScreenShare'
 import StopScreenShareIcon from '@material-ui/icons/StopScreenShare'
 import CallEndIcon from '@material-ui/icons/CallEnd'
 import ChatIcon from '@material-ui/icons/Chat'
+import CallIcon from '@material-ui/icons/Call';
+import RecordVoiceOverIcon from '@material-ui/icons/RecordVoiceOver';
+import PanToolIcon from '@material-ui/icons/PanTool';
 import { useRef, useEffect, createRef } from 'react';
 import { Holistic } from '@mediapipe/holistic';
 import * as hlt from '@mediapipe/holistic';
@@ -27,11 +30,56 @@ import { Row } from 'reactstrap'
 import Modal from 'react-bootstrap/Modal'
 import 'bootstrap/dist/css/bootstrap.css'
 import "./Video.css"
+import Switch from 'react-input-switch';
+
 
 import ChromeOnly from './web_components/chromeOnly'
 import UserVideo from './web_components/UserVideo'
+import { Height } from '@material-ui/icons'
 
 const server_url = process.env.NODE_ENV === 'production' ? 'https://adoring-sea-27008.pktriot.net' : "http://localhost:4001"
+
+function dragElement(elmnt) {
+	var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+	function elementDrag(e) {
+		e = e || window.event;
+		e.preventDefault();
+		// calculate the new cursor position:
+		pos1 = pos3 - e.clientX;
+		pos2 = pos4 - e.clientY;
+		pos3 = e.clientX;
+		pos4 = e.clientY;
+		// set the element's new position:
+		elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+		elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+	}
+
+	function closeDragElement() {
+		// stop moving when mouse button is released:
+		document.onmouseup = null;
+		document.onmousemove = null;
+	}
+
+	function dragMouseDown(e) {
+		e = e || window.event;
+		e.preventDefault();
+		// get the mouse cursor position at startup:
+		pos3 = e.clientX;
+		pos4 = e.clientY;
+		document.onmouseup = closeDragElement;
+		// call a function whenever the cursor moves:
+		document.onmousemove = elementDrag;
+	}
+	// move the DIV from anywhere inside the DIV:
+	if (document.getElementById("canvas-header")) {
+		// if present, the header is where you move the DIV from:
+		document.getElementById("canvas-header").onmousedown = dragMouseDown;
+	} else {
+		// otherwise, move the DIV from anywhere inside the DIV:
+		elmnt.onmousedown = dragMouseDown;
+	}
+}
 
 var connections = {}
 const peerConnectionConfig = {
@@ -63,7 +111,8 @@ class Video extends Component {
 			message: "",
 			newmessages: 0,
 			askForUsername: true,
-			username: null
+			username: null,
+			userType: 0
 		}
 		connections = {}
 		this.camera = null
@@ -248,37 +297,22 @@ class Video extends Component {
 	}
 
 	changeCssVideos = (main) => {
-		let widthMain = main.offsetWidth
-		let minWidth = "30%"
-		if ((widthMain * 30 / 100) < 300) {
-			minWidth = "300px"
-		}
-		let minHeight = "40%"
-
-		let height = String(100 / elms) + "%"
 		let width = ""
 		if (elms === 0 || elms === 1) {
 			width = "100%"
-			height = "100%"
 		} else if (elms === 2) {
 			width = "45%"
-			height = "100%"
 		} else if (elms === 3 || elms === 4) {
 			width = "35%"
-			height = "50%"
 		} else {
 			width = String(100 / elms) + "%"
 		}
 
-		let videos = main.querySelectorAll("#user-video")
+		let videos = main.querySelectorAll("#user")
 		for (let a = 0; a < videos.length; ++a) {
-			videos[a].style.minWidth = minWidth
-			videos[a].style.minHeight = minHeight
 			videos[a].style.setProperty("width", width)
-			videos[a].style.setProperty("height", height)
 		}
-
-		return { minWidth, minHeight, width, height }
+		return { width }
 	}
 
 	connectToSocketServer = () => {
@@ -330,13 +364,12 @@ class Video extends Component {
 							let video = document.createElement('video')
 
 							let css = {
-								minWidth: cssMesure.minWidth, minHeight: cssMesure.minHeight, maxHeight: "100%", margin: "10px",
-								borderStyle: "solid", borderColor: "#bdbdbd", objectFit: "fill", Transformrm: "rotateZ(180)"
+								Transform: "rotateZ(180)"
 							}
-							for (let i in css) video.style[i] = css[i]
+							for (let i in css) User.style[i] = css[i]
 
-							video.style.setProperty("width", cssMesure.width)
-							video.style.setProperty("height", cssMesure.height)
+							User.style.setProperty("width", cssMesure.width)
+							// User.style.setProperty("height", cssMesure.height)
 							video.setAttribute('data-socket', socketListId)
 							video.setAttribute('id', "user-video");
 							video.srcObject = event.stream
@@ -346,11 +379,13 @@ class Video extends Component {
 							// Username.setAttribute('className', "user-name");
 
 							// <a className='user-name'>{this.state.username}</a>
-
+							User.setAttribute('id', 'user');
 							User.appendChild(video);
+
 							// User.appendChild(Username);
 
-							main.appendChild(User)
+							// main.appendChild(User)
+							main.appendChild(User);
 						}
 					}
 
@@ -479,11 +514,18 @@ class Video extends Component {
 	}
 
 	HandleConnection = () => {
-		if(this.state.username === null || this.state.username === "") {
+		if (this.state.username === null || this.state.username === "") {
 			this.forceUsername();
 			alert("Please enter a username");
-		} 
+		}
 		else this.connect();
+	}
+
+	handleSwitchUserType = () => this.setState({ userType: this.state.userType === 0 ? 1 : 0 })
+
+	handleCaption = () => {
+		let Caption = document.querySelector("#caption-canvas");
+		if (Caption) dragElement(Caption);
 	}
 
 	render() {
@@ -494,12 +536,31 @@ class Video extends Component {
 		}
 		else return (
 			<div>
-				{this.state.askForUsername === true?
+				{this.state.askForUsername === true ?
 					<div>
 						<div className='username-page'>
 							<p className='title'>Hãy đặt tên người dùng</p>
 							<Input id="username-input" className='input' placeholder="Tên người dùng" onChange={e => this.handleUsername(e)} />
-							<Button className='button' variant="contained" color="primary" onClick={this.HandleConnection} style={{background: "#A5402D"}} >Kết nối</Button>
+							<Button className='button' variant="contained" color="primary" onClick={this.HandleConnection} style={{ background: "#A5402D" }} ><CallIcon />&nbsp;Kết nối</Button>
+							<div className='switch'>
+								<RecordVoiceOverIcon></RecordVoiceOverIcon>
+								<Switch value={this.state.userType} onChange={this.handleSwitchUserType} styles={{
+									track: {
+										backgroundColor: '#cccccc'
+									},
+									trackChecked: {
+										backgroundColor: '#A5402D'
+									},
+									button: {
+										backgroundColor: '#ffffff'
+									},
+									buttonChecked: {
+										backgroundColor: '#ffffff'
+									}
+
+								}} style={{ transform: "scale(1.5)", marginTop: "8px" }}></Switch>
+								<PanToolIcon></PanToolIcon>
+							</div>
 						</div>
 
 						<div className='video-wrapper'>
@@ -552,7 +613,7 @@ class Video extends Component {
 						</Modal>
 
 						<div className="main-content">
-							<div className='copy-box' style={{ paddingTop: "20px" }}>
+							<div className='copy-box' style={{ paddingTop: "20px", height: "60px" }}>
 								<Input value={window.location.href} disable="true" style={{ color: "white" }}></Input>
 								<Button style={{
 									background: "#A5402D", color: "white", marginLeft: "20px",
@@ -567,6 +628,8 @@ class Video extends Component {
 									{/* <a className='user-name'>{this.state.username}</a> */}
 								</div>
 							</Row>
+							{/* <div id="caption-canvas"><a id="caption-text">{this.handleCaption}Phụ đề sẽ trông như thế này</a><button id="close-caption">X</button></div> */}
+
 						</div>
 					</div>
 				}
