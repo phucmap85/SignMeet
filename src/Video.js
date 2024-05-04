@@ -622,9 +622,9 @@ class Video extends Component {
 							</div>
 
 							<Row id="main" className="video-container">
-								{/* <UserVideo></UserVideo> */}
 								<div id='user'>
-									<video id="user-video" ref={this.localVideoref} autoPlay muted></video>
+									<UserVideo></UserVideo>
+									{/* <video id="user-video" ref={this.localVideoref} autoPlay muted></video> */}
 									{/* <a className='user-name'>{this.state.username}</a> */}
 								</div>
 							</Row>

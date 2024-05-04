@@ -9,152 +9,185 @@ import { reshape } from 'mathjs';
 import './UserVideo.css';
 
 
+
+
 function indexOfMax(arr) {
-    if (arr.length === 0) return -1;
+   if (arr.length === 0) return -1;
 
-    var max = arr[0], maxIndex = 0;
 
-    for (var i = 1; i < arr.length; i++) {
-        if (arr[i] > max) {
-            maxIndex = i;
-            max = arr[i];
-        }
-    }
+   var max = arr[0], maxIndex = 0;
 
-    return maxIndex;
+
+   for (var i = 1; i < arr.length; i++) {
+       if (arr[i] > max) {
+           maxIndex = i;
+           max = arr[i];
+       }
+   }
+
+
+   return maxIndex;
 }
 
-// async function runModel(landmarks) {
-//     const model = await tf.loadLayersModel('https://raw.githubusercontent.com/PL508/model-test/master/model.json');
 
-//     landmarks = reshape(landmarks, [-1, 30, 126]);
+async function runModel(landmarks) {
+   const model = await tf.loadLayersModel('https://huggingface.co/PhucMap/SMR/raw/main/model.json');
 
-//     return model.predict(tf.tensor(landmarks)).dataSync();
-//}
+
+   landmarks = reshape(landmarks, [-1, 30, 126]);
+
+
+   return model.predict(tf.tensor(landmarks)).dataSync();
+}
+
 
 function UserVideo() {
-    const webcamRef = useRef(null);
-    const canvasRef = useRef(null);
-    var camera = null;
+   const webcamRef = useRef(null);
+   const canvasRef = useRef(null);
+   var camera = null;
 
-    function makeLandmarkTimestep(results) {
-        let pose = [], lh = [], rh = [];
 
-        if (results.poseLandmarks) {
-            results.poseLandmarks.forEach(val => {
-                pose.push([val.x, val.y, val.z]);
-            });
-        } else {
-            (pose = []).length = 132;
-            pose.fill(0);
-        }
+   function makeLandmarkTimestep(results) {
+       let face = [], pose = [], lh = [], rh = [];
 
-        if (results.leftHandLandmarks) {
-            results.leftHandLandmarks.forEach(val => {
-                lh.push([val.x, val.y, val.z]);
-            });
-        } else {
-            (lh = []).length = 63;
-            lh.fill(0);
-        }
 
-        if (results.rightHandLandmarks) {
-            results.rightHandLandmarks.forEach(val => {
-                rh.push([val.x, val.y, val.z]);
-            });
-        } else {
-            (rh = []).length = 63;
-            rh.fill(0);
-        }
+       if (results.poseLandmarks) {
+           results.poseLandmarks.forEach(val => {
+               pose.push([val.x, val.y, val.z]);
+           });
+       } else {
+           for(let i = 0; i < 33; i++) pose.push([0, 0, 0]);
+       }
 
-        pose = pose.flat();
-        lh = lh.flat();
-        rh = rh.flat();
 
-        // return pose.concat(face, lh, rh);
+       if (results.faceLandmarks) {
+           results.faceLandmarks.forEach(val => {
+               face.push([val.x, val.y, val.z]);
+           });
+       } else {
+           for(let i = 0; i < 468; i++) face.push([0, 0, 0]);
+       }
 
-        return lh.concat(rh);
-    }
 
-    let lmList = [];
+       if (results.leftHandLandmarks) {
+           results.leftHandLandmarks.forEach(val => {
+               lh.push([val.x, val.y, val.z]);
+           });
+       } else {
+           for(let i = 0; i < 21; i++) lh.push([0, 0, 0]);
+       }
 
-    function onResults(results) {
-        const videoWidth = webcamRef.current.video.videoWidth;
-        const videoHeight = webcamRef.current.video.videoHeight;
-        
-        console.log(makeLandmarkTimestep(results))
-        // if (lmList.length < 30) lmList.push(makeLandmarkTimestep(results));
-        // else {
-        //     runModel(lmList).then(res => {
-        //         console.log(indexOfMax(res));
-        //     });
-        //     (lmList = []).length = 0;
-        // }
 
-        // Set canvas width
-        canvasRef.current.width = videoWidth;
-        canvasRef.current.height = videoHeight;
+       if (results.rightHandLandmarks) {
+           results.rightHandLandmarks.forEach(val => {
+               rh.push([val.x, val.y, val.z]);
+           });
+       } else {
+           for(let i = 0; i < 21; i++) rh.push([0, 0, 0]);
+       }
 
-        const canvasElement = canvasRef.current;
-        const canvasCtx = canvasElement.getContext("2d");
-        canvasCtx.save();
-        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        canvasCtx.drawImage(
-            results.image,
-            0,
-            0,
-            canvasElement.width,
-            canvasElement.height
-        );
 
-        drawConnectors(canvasCtx, results.poseLandmarks, hlt.POSE_CONNECTIONS,
-            { color: '#00FF00' });
-        drawLandmarks(canvasCtx, results.poseLandmarks,
-            { color: '#FF0000', lineWidth: 0.5 });
-        drawConnectors(canvasCtx, results.leftHandLandmarks, hlt.HAND_CONNECTIONS,
-            { color: '#E0E0E0' });
-        drawLandmarks(canvasCtx, results.leftHandLandmarks,
-            { color: '#792cfa', lineWidth: 0.5 });
-        drawConnectors(canvasCtx, results.rightHandLandmarks, hlt.HAND_CONNECTIONS,
-            { color: '#E0E0E0' });
-        drawLandmarks(canvasCtx, results.rightHandLandmarks,
-            { color: '#502c79', lineWidth: 0.5 });
+       return {face, pose, lh, rh};
+   }
 
-        canvasCtx.restore();
-    }
 
-    useEffect(() => {
-        const holistic = new Holistic({
-            locateFile: (file) => {
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
-            }
-        })
+   let lmList = [];
 
-        holistic.setOptions({
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        })
 
-        holistic.onResults(onResults)
+   function onResults(results) {
+       const videoWidth = webcamRef.current.video.videoWidth;
+       const videoHeight = webcamRef.current.video.videoHeight;
+      
+       let timeStep = makeLandmarkTimestep(results);
 
-        if (typeof webcamRef.current !== "undefined" && webcamRef.current !== null) {
-            camera = new cam.Camera(webcamRef.current.video, {
-                onFrame: async () => {
-                    await holistic.send({ image: webcamRef.current.video });
-                },
-                width: 1280,
-                height: 720,
-            });
-            camera.start();
-        }
-    }, [])
 
-    return (
-        <div id='user-video'>
-            <Webcam ref={webcamRef} width={1280} height={720} hidden style={{position:"absolute"}}/>
-            <canvas  ref={canvasRef} style={{borderRadius:"2%"}}/>
-        </div>
-    );
+       const face = timeStep.face, pose = timeStep.pose;
+       const lh = timeStep.lh, rh = timeStep.rh;
+
+       console.log(face, pose, lh, rh);
+       // if (lmList.length < 30) lmList.push(makeLandmarkTimestep(results));
+       // else {
+       //     runModel(lmList).then(res => {
+       //         console.log(indexOfMax(res));
+       //     });
+       //     (lmList = []).length = 0;
+       // }
+
+
+       // Set canvas width
+       canvasRef.current.width = videoWidth;
+       canvasRef.current.height = videoHeight;
+
+
+       const canvasElement = canvasRef.current;
+       const canvasCtx = canvasElement.getContext("2d");
+       canvasCtx.save();
+       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+       canvasCtx.drawImage(
+           results.image,
+           0,
+           0,
+           canvasElement.width,
+           canvasElement.height
+       );
+
+
+       drawConnectors(canvasCtx, results.poseLandmarks, hlt.POSE_CONNECTIONS,
+           { color: '#00FF00' });
+       drawLandmarks(canvasCtx, results.poseLandmarks,
+           { color: '#FF0000', lineWidth: 0.5 });
+       drawConnectors(canvasCtx, results.leftHandLandmarks, hlt.HAND_CONNECTIONS,
+           { color: '#E0E0E0' });
+       drawLandmarks(canvasCtx, results.leftHandLandmarks,
+           { color: '#792cfa', lineWidth: 0.5 });
+       drawConnectors(canvasCtx, results.rightHandLandmarks, hlt.HAND_CONNECTIONS,
+           { color: '#E0E0E0' });
+       drawLandmarks(canvasCtx, results.rightHandLandmarks,
+           { color: '#502c79', lineWidth: 0.5 });
+
+
+       canvasCtx.restore();
+   }
+
+
+   useEffect(() => {
+       const holistic = new Holistic({
+           locateFile: (file) => {
+               return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+           }
+       })
+
+
+       holistic.setOptions({
+           minDetectionConfidence: 0.5,
+           minTrackingConfidence: 0.5
+       })
+
+
+       holistic.onResults(onResults)
+
+
+       if (typeof webcamRef.current !== "undefined" && webcamRef.current !== null) {
+           camera = new cam.Camera(webcamRef.current.video, {
+               onFrame: async () => {
+                   await holistic.send({ image: webcamRef.current.video });
+               },
+               width: 1280,
+               height: 720,
+           });
+           camera.start();
+       }
+   }, [])
+
+
+   return (
+       <div id='user-video'>
+           <Webcam ref={webcamRef} width={1280} height={720} hidden style={{position:"absolute"}}/>
+           <canvas  ref={canvasRef} style={{borderRadius:"2%"}}/>
+       </div>
+   );
 }
 
+
 export default UserVideo;
+
