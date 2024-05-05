@@ -527,7 +527,6 @@ class Video extends Component {
 		let Caption = document.querySelector("#caption-canvas");
 		if (Caption) dragElement(Caption);
 	}
-
 	render() {
 		if (this.isChrome() === false) {
 			return (
@@ -597,7 +596,7 @@ class Video extends Component {
 
 						<Modal className='chat-modal' show={this.state.showModal} onHide={this.closeChat}>
 							<Modal.Header closeButton>
-								<Modal.Title>Phòng nhắn tin</Modal.Title>
+								<Modal.Title>Trò chuyện</Modal.Title>
 							</Modal.Header>
 							<Modal.Body className='chat-body'>
 								{this.state.messages.length > 0 ? this.state.messages.map((item, index) => (
@@ -607,14 +606,14 @@ class Video extends Component {
 								)) : <p>Chưa có tin nhắn</p>}
 							</Modal.Body>
 							<Modal.Footer className="chat-send-msg">
-								<Input className='chat-content-msg' placeholder="Message" value={this.state.message} onChange={e => this.handleMessage(e)} />
+								<Input className='chat-content-msg' placeholder="Tin nhắn" value={this.state.message} onKeyPress={(e) => {if(e.key === "Enter")this.sendMessage}} onChange={e => this.handleMessage(e)} />
 								<Button className='chat-send-btn' variant="contained" color="primary" onClick={this.sendMessage}>Gửi</Button>
 							</Modal.Footer>
 						</Modal>
 
 						<div className="main-content">
 							<div className='copy-box' style={{ paddingTop: "20px", height: "60px" }}>
-								<Input value={window.location.href} disable="true" style={{ color: "white" }}></Input>
+								<Input value={window.location.href} disable="true" style={{ color: "white", width:"maxContent"}}></Input>
 								<Button style={{
 									background: "#A5402D", color: "white", marginLeft: "20px",
 									width: "100px", fontSize: "12px"
