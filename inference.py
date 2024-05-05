@@ -2,7 +2,6 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import time
-from datetime import datetime
 import os
 import tensorflow as tf
 
@@ -16,7 +15,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 mp_drawing = mp.solutions.drawing_utils
 mp_holistic = mp.solutions.holistic
 
-classes = sorted(os.listdir('data'))
+classes = sorted(os.listdir('dataset/VNSL'))
 
 def draw_landmark_on_image(image, results):  
     # Right hand

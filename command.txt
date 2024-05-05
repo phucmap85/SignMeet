@@ -1,0 +1,4 @@
+waitress-serve --host 127.0.0.1 --port=1212 offline:app
+ngrok http --domain=sharp-pure-goat.ngrok-free.app 1212
+
+pktriot tcp 5000
