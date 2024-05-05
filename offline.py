@@ -4,7 +4,7 @@ from openai import OpenAI
 import numpy as np
 import os
 
-from flask import Flask, request, send_from_directory, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import cross_origin
 
 dict_map = {
