@@ -28,8 +28,36 @@
     text-align: center;
 }
 
+.chat-content-msg {
+    border: none;
+    border-bottom: 2px solid #A5402D;
+}
+
+.chat-content-msg {
+    border-color: #A5402D;
+    color: black !important;
+
+}
+
+.chat-content-msg:focus {
+    outline: none !important;
+    border: 2px solid #A5402D;
+    border-radius: 5px;
+}
+
+
+.chat-send-btn {
+    background: #A5402D;
+    color: white;
+    border-radius: 5px;
+    border: none;
+    padding: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
 .username-page {
-	font-family: "Inter", sans-serif;
+    font-family: "Inter", sans-serif;
     background: whitesmoke;
     width: 40%;
     border-radius: 3%;
@@ -86,7 +114,7 @@
     color: white;
 }
 
-#bot-btn::before{
+#bot-btn::before {
     position: absolute;
     z-index: -1;
     content: "";
@@ -100,6 +128,7 @@
     background: #f44336 !important;
     width: 2.2em !important;
 }
+
 .bottom-btn .leave {
     color: white !important;
 }
@@ -142,7 +171,7 @@
     align-items: center;
 }
 
-#user .user-name{
+#user .user-name {
     position: absolute;
     left: 12px;
     bottom: -8px;
@@ -165,30 +194,60 @@
 }
 
 #caption-canvas {
-	z-index: 100000;
-	font-family: 'Be Vietnam Pro', sans-serif;
-	display: inline-block;
-	position: absolute;
-	text-align: center;
-	;
-	/* padding: 5px 10px; */
-	top: 80vh;
-	left: 30vw;
-	max-width: 80%;
-	word-wrap: break-word;
-	/* IE 5.5-7 */
-	white-space: -moz-pre-wrap;
-	/* Firefox 1.0-2.0 */
-	white-space: pre-wrap;
-	/* current browsers */
-	/* backdrop-filter: blur(10px); */
-	/* opacity: 60%; */
-	background: transparent;
-	font-size: 2em !important;
-	color: white;
+    z-index: 100000;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    display: inline-block;
+    position: absolute;
+    text-align: center;
+    ;
+    /* padding: 5px 10px; */
+    top: 80vh;
+    left: 30vw;
+    max-width: 80%;
+    word-wrap: break-word;
+    /* IE 5.5-7 */
+    white-space: -moz-pre-wrap;
+    /* Firefox 1.0-2.0 */
+    white-space: pre-wrap;
+    /* current browsers */
+    /* backdrop-filter: blur(10px); */
+    /* opacity: 60%; */
+    background: transparent;
+    font-size: 2em !important;
+    color: white;
 }
 
 #caption-text {
-	padding: 5px 10px;
-	background: black;
+    padding: 5px 10px;
+    background: black;
+}
+
+#canvas-wrapper {
+	z-index: 1000000;
+	position: absolute;
+    top: 0px;
+	display: flex;
+	align-items: flex-end;
+	height: 250px;
+	width: 150px;
+}
+
+#close-canvas {
+	position: absolute;
+	right: 5px !important;
+	top: 3px !important;
+	padding: 0px !important;
+	background: transparent;
+	border: none;
+	color: white;
+	z-index: 2;
+	font-size: 1.5em;
+}
+
+#canvas {
+	position: absolute;
+	height: 250px;
+    top: 0px;
+	width: 150px;
+	background: transparent;
 }

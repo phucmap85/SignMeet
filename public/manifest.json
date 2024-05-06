@@ -1,6 +1,6 @@
 {
-  "short_name": "Video Meeting",
-  "name": "Video Meeting",
+  "short_name": "SignMeet",
+  "name": "SignMeet",
   "start_url": "https://video.sebastienbiollo.com",
   "display": "standalone",
   "theme_color": "#000000",

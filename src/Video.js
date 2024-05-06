@@ -13,6 +13,8 @@ import ChatIcon from '@material-ui/icons/Chat'
 import CallIcon from '@material-ui/icons/Call';
 import RecordVoiceOverIcon from '@material-ui/icons/RecordVoiceOver';
 import PanToolIcon from '@material-ui/icons/PanTool';
+import SendIcon from '@material-ui/icons/Send';
+import FileCopyIcon from '@material-ui/icons/FileCopy';
 import { useRef, useEffect, createRef } from 'react';
 import { Holistic } from '@mediapipe/holistic';
 import * as hlt from '@mediapipe/holistic';
@@ -38,48 +40,6 @@ import UserVideo from './web_components/UserVideo'
 import { Height } from '@material-ui/icons'
 
 const server_url = process.env.NODE_ENV === 'production' ? 'https://adoring-sea-27008.pktriot.net' : "http://localhost:4001"
-
-function dragElement(elmnt) {
-	var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-	function elementDrag(e) {
-		e = e || window.event;
-		e.preventDefault();
-		// calculate the new cursor position:
-		pos1 = pos3 - e.clientX;
-		pos2 = pos4 - e.clientY;
-		pos3 = e.clientX;
-		pos4 = e.clientY;
-		// set the element's new position:
-		elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-		elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-	}
-
-	function closeDragElement() {
-		// stop moving when mouse button is released:
-		document.onmouseup = null;
-		document.onmousemove = null;
-	}
-
-	function dragMouseDown(e) {
-		e = e || window.event;
-		e.preventDefault();
-		// get the mouse cursor position at startup:
-		pos3 = e.clientX;
-		pos4 = e.clientY;
-		document.onmouseup = closeDragElement;
-		// call a function whenever the cursor moves:
-		document.onmousemove = elementDrag;
-	}
-	// move the DIV from anywhere inside the DIV:
-	if (document.getElementById("canvas-header")) {
-		// if present, the header is where you move the DIV from:
-		document.getElementById("canvas-header").onmousedown = dragMouseDown;
-	} else {
-		// otherwise, move the DIV from anywhere inside the DIV:
-		elmnt.onmousedown = dragMouseDown;
-	}
-}
 
 var connections = {}
 const peerConnectionConfig = {
@@ -112,7 +72,8 @@ class Video extends Component {
 			newmessages: 0,
 			askForUsername: true,
 			username: null,
-			userType: 0
+			userType: 0,
+			CWASALoaded: false,
 		}
 		connections = {}
 		this.camera = null
@@ -148,6 +109,91 @@ class Video extends Component {
 		} catch (e) { console.log(e) }
 	}
 
+	resampleTo16kHZ = (audioData, origSampleRate = 44100) => {
+		// Convert the audio data to a Float32Array
+		const data = new Float32Array(audioData);
+
+		// Calculate the desired length of the resampled data
+		const targetLength = Math.round(data.length * (16000 / origSampleRate));
+
+		// Create a new Float32Array for the resampled data
+		const resampledData = new Float32Array(targetLength);
+
+		// Calculate the spring factor and initialize the first and last values
+		const springFactor = (data.length - 1) / (targetLength - 1);
+		resampledData[0] = data[0];
+		resampledData[targetLength - 1] = data[data.length - 1];
+
+		// Resample the audio data
+		for (let i = 1; i < targetLength - 1; i++) {
+			const index = i * springFactor;
+			const leftIndex = Math.floor(index).toFixed();
+			const rightIndex = Math.ceil(index).toFixed();
+			const fraction = index - leftIndex;
+			resampledData[i] = data[leftIndex] + (data[rightIndex] - data[leftIndex]) * fraction;
+		}
+
+		// Return the resampled data
+		return resampledData;
+	}
+
+
+	float32ToSigned16 = (floatArray) => {
+		var signed16Array = new Int16Array(floatArray.length);
+
+		for (var i = 0; i < floatArray.length; i++) {
+			var floatValue = floatArray[i];
+			// Clamp the value between -1 and 1
+			floatValue = Math.max(-1, Math.min(floatValue, 1));
+			// Convert to a signed 16-bit integer
+			signed16Array[i] = floatValue * 0x7FFF;
+		}
+
+		return signed16Array;
+	}
+
+	startRecordAudio = (stream) => {
+		if (stream) {
+			// const socket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
+			  const socket = new WebSocket("ws://localhost:8080");
+			let isServerReady = false;
+
+			socket.addEventListener("open", () => {
+				if (isServerReady === false) {
+					isServerReady = true;
+				}
+			});
+
+			socket.addEventListener("message", (event) => {
+				const e = JSON.parse(event.data);
+				console.log("Message from server ", e);
+			});
+
+			const audioDataCache = [];
+			const context = new AudioContext();
+			const mediaStream = context.createMediaStreamSource(stream);
+			const recorder = context.createScriptProcessor(4096, 1, 1);
+
+			recorder.onaudioprocess = async (event) => {
+				console.dir(isServerReady);
+				if (!context || !isServerReady) return;
+
+				const inputData = event.inputBuffer.getChannelData(0);
+				const audioData16kHz = this.resampleTo16kHZ(inputData, context.sampleRate);
+
+				console.dir(event.inputBuffer, inputData);
+				audioDataCache.push(inputData);
+				// socket.send(this.float32ToSigned16(audioData16kHz));
+			};
+
+			// Prevent page mute
+			mediaStream.connect(recorder);
+			recorder.connect(context.destination);
+			mediaStream.connect(context.destination);
+			// }
+		}
+	}
+
 	getMedia = () => {
 		this.setState({
 			video: this.videoAvailable,
@@ -161,8 +207,12 @@ class Video extends Component {
 	getUserMedia = () => {
 		if ((this.state.video && this.videoAvailable) || (this.state.audio && this.audioAvailable)) {
 			navigator.mediaDevices.getUserMedia({ video: this.state.video, audio: this.state.audio })
-				.then(this.getUserMediaSuccess)
-				.then((stream) => { })
+				.then(stream => {
+					this.getUserMediaSuccess(stream)
+					console.dir(stream)
+					if(this.state.audio && !this.state.video)this.startRecordAudio(stream)
+				})
+				.then((e) => {})
 				.catch((e) => console.log(e))
 		} else {
 			try {
@@ -463,6 +513,7 @@ class Video extends Component {
 	handleUsername = (e) => this.setState({ username: e.target.value })
 
 	sendMessage = () => {
+		console.log("msg sent")
 		socket.emit('chat-message', this.state.message, this.state.username)
 		this.setState({ message: "", sender: this.state.username })
 	}
@@ -525,8 +576,23 @@ class Video extends Component {
 
 	handleCaption = () => {
 		let Caption = document.querySelector("#caption-canvas");
-		if (Caption) dragElement(Caption);
+		// if (Caption) dragElement(Caption);
 	}
+
+	handleEnterMessage = (e) => {
+		if (e.key === "Enter") {
+			this.sendMessage();
+		}
+	}
+
+	HandleCWASALoad = () => {
+		if (this.state.CWASALoaded === false) {
+			console.log("CWASALoaded")
+			CWASA.init();
+			this.setState({ CWASALoaded: true });
+		}
+	}
+
 	render() {
 		if (this.isChrome() === false) {
 			return (
@@ -606,18 +672,18 @@ class Video extends Component {
 								)) : <p>Chưa có tin nhắn</p>}
 							</Modal.Body>
 							<Modal.Footer className="chat-send-msg">
-								<Input className='chat-content-msg' placeholder="Tin nhắn" value={this.state.message} onKeyPress={(e) => {if(e.key === "Enter")this.sendMessage}} onChange={e => this.handleMessage(e)} />
-								<Button className='chat-send-btn' variant="contained" color="primary" onClick={this.sendMessage}>Gửi</Button>
+								<input className='chat-content-msg' placeholder="Tin nhắn" value={this.state.message} onKeyDown={e => this.handleEnterMessage(e)} onChange={e => this.handleMessage(e)} />
+								<button className='chat-send-btn' onClick={this.sendMessage}><SendIcon />&nbsp;Gửi</button>
 							</Modal.Footer>
 						</Modal>
 
 						<div className="main-content">
 							<div className='copy-box' style={{ paddingTop: "20px", height: "60px" }}>
-								<Input value={window.location.href} disable="true" style={{ color: "white", width:"maxContent"}}></Input>
+								<Input value={window.location.href} disable="true" style={{ color: "white", width: "200px" }}></Input>
 								<Button style={{
-									background: "#A5402D", color: "white", marginLeft: "20px",
-									width: "100px", fontSize: "12px"
-								}} onClick={this.copyUrl}>Sao chép</Button>
+									background: "#A5402D", color: "white", marginLeft: "20px", padding: "5px",
+									width: "120px", fontSize: "12px"
+								}} onClick={this.copyUrl}><FileCopyIcon />&nbsp;Sao chép</Button>
 							</div>
 
 							<Row id="main" className="video-container">
@@ -627,6 +693,11 @@ class Video extends Component {
 									{/* <a className='user-name'>{this.state.username}</a> */}
 								</div>
 							</Row>
+
+							<div id="canvas-wrapper">
+								<button id="close-canvas">X</button>
+								<div id="canvas" onLoad={this.HandleCWASALoad()} class="CWASAAvatar av0"></div>
+							</div>
 							{/* <div id="caption-canvas"><a id="caption-text">{this.handleCaption}Phụ đề sẽ trông như thế này</a><button id="close-caption">X</button></div> */}
 
 						</div>

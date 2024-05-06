@@ -7,6 +7,7 @@ import * as tf from '@tensorflow/tfjs';
 import Webcam from 'react-webcam';
 import { reshape } from 'mathjs';
 import './UserVideo.css';
+import axios from 'axios';
 
 
 function indexOfMax(arr) {
@@ -85,6 +86,17 @@ function UserVideo() {
     let lm_arr = [];
     let t0 = getTime(), on_countdown = 0, on_lip = 0, on_passed = 0, pre_num_of_frames = 0;
 
+    async function sendHTTPReq(data) {
+        let formData = new FormData();
+        formData.append("arr", data);
+        const post = await fetch('https://sharp-pure-goat.ngrok-free.app/word', {
+            method: 'POST',
+            body: formData,
+        })
+        const response = await post.json();
+        console.dir(response);
+    }
+
     function onResults(results) {
         const videoWidth = webcamRef.current.video.videoWidth;
         const videoHeight = webcamRef.current.video.videoHeight;
@@ -127,11 +139,13 @@ function UserVideo() {
                 pre_num_of_frames = lm_arr.length;
                 console.log(pre_num_of_frames, lm_arr);
 
-                runModel(lm_arr).then(res => {
-                    console.log("Prediction: ", indexOfMax(res));
-                });
-                
-                (lm_arr = []).length = 0;
+                sendHTTPReq(lm_arr);
+
+                    // runModel(lm_arr).then(res => {
+                    //     console.log("Prediction: ", indexOfMax(res));
+                    // });
+
+                    (lm_arr = []).length = 0;
             }
         }
 
