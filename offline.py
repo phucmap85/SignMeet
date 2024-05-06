@@ -74,7 +74,7 @@ for folder in classes:
 
 
 # Load sign prediction model
-reg_vnsl = load_model('best_model.h5')
+reg_vnsl = load_model('RegVNSL.h5')
 
 
 # Set up OpenAI API
@@ -127,14 +127,20 @@ def sentence_completion():
 @cross_origin()
 def word_predict():
   try:
-    # Get array from web
+    # Get array from request
     recv_arr = request.form['arr']
 
-    while(len(lm_list) < timestep):
-      lm_list.append([0] * len(lm_list[0]))
+    # Convert to NumPy array and reshape
+    lm_list = np.fromstring(recv_arr, sep=',')
+    lm_list = np.reshape(lm_list, (-1, 144))
+
+    # Add missing timestep
+    while(lm_list.shape[0] < timestep):
+      lm_list = np.append(lm_list, np.zeros((1, lm_list.shape[1])), axis=0)
     
+    print(lm_list.shape)
+
     # Reshape
-    lm_list = np.asarray(recv_arr)
     lm_list = lm_list.reshape((-1, lm_list.shape[0], lm_list.shape[1]))
     
     # Predict
@@ -145,11 +151,11 @@ def word_predict():
     if(results[0][index] > 0.7):
       return jsonify({'result': classes[index]})
     else:
-      return jsonify({'result': "None"})
+      return jsonify({'result': 'None'})
   except:
     return jsonify({'result': 'None'})
 
 
 if __name__ == '__main__':
   # run app on port 1212
-  app.run(port=1212)
+  app.run(port=1212, debug=True)
