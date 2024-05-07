@@ -1,6 +1,3 @@
-import React from 'react';
-
-import { useEffect } from 'react';
 var VAD = function (options) {
   // Default options
   this.options = {
@@ -224,41 +221,4 @@ var VAD = function (options) {
 
 window.VAD = VAD;
 
-
-function App() {
-
-  function start() {
-    var audioContext = new AudioContext();
-
-    // Define function called by getUserMedia 
-    function startUserMedia(stream) {
-      // Create MediaStreamAudioSourceNode
-      var source = audioContext.createMediaStreamSource(stream);
-
-      // Setup options
-      var options = {
-        source: source,
-        voice_stop: function (e) { console.dir(e); },
-        voice_start: function (e) { console.dir(e); }
-      };
-
-      // Create VAD
-      var vad = new VAD(options);
-      console.log(vad)
-    }
-
-    // Ask for audio device
-    navigator.getUserMedia({ audio: true }, startUserMedia, function (e) {
-      console.log("No live audio input in this browser: " + e);
-    });
-  }
-
-  return (
-    <div>
-      <h1>{start() && "Say sth"}</h1>
-    </div>
-  )
-
-}
-
-export default App
+export default VAD;
