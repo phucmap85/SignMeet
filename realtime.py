@@ -1,73 +1,107 @@
 #!/usr/bin/env python3
 import torch
-from whisper_online import *
-from transformers import pipeline
-from underthesea import text_normalize, word_tokenize
-
 import asyncio
 import sys
-import argparse
-import re
 import json
+import re
+import argparse
 import numpy as np
+
+from faster_whisper import WhisperModel
+from underthesea import text_normalize, word_tokenize
+
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
+
 parser = argparse.ArgumentParser()
 
-# server options
-parser.add_argument("--host", type=str, default="127.0.0.1")
-parser.add_argument("--port", type=int, default=5000)
-
-# options from whisper_online
-add_shared_args(parser)
-args = parser.parse_args()
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-# setting whisper object by args 
-
 SAMPLING_RATE = 16000
+PACKET_SIZE = 65536
 
-size = args.model
-language = args.lan
+device = 0 if torch.cuda.is_available() else -1
+whisper = WhisperModel("PhucMap/phothitham-tiny-ct2", device=("cuda" if device == 0 else "cpu"),
+                       compute_type=("float16" if device == 0 else "int8"))
 
-t = time.time()
-print(f"Loading Whisper {size} model for {language}...",file=sys.stderr,end="\n",flush=True)
+dict_map = {
+    "òa": "oà",
+    "Òa": "Oà",
+    "ÒA": "OÀ",
+    "óa": "oá",
+    "Óa": "Oá",
+    "ÓA": "OÁ",
+    "ỏa": "oả",
+    "Ỏa": "Oả",
+    "ỎA": "OẢ",
+    "õa": "oã",
+    "Õa": "Oã",
+    "ÕA": "OÃ",
+    "ọa": "oạ",
+    "Ọa": "Oạ",
+    "ỌA": "OẠ",
+    "òe": "oè",
+    "Òe": "Oè",
+    "ÒE": "OÈ",
+    "óe": "oé",
+    "Óe": "Oé",
+    "ÓE": "OÉ",
+    "ỏe": "oẻ",
+    "Ỏe": "Oẻ",
+    "ỎE": "OẺ",
+    "õe": "oẽ",
+    "Õe": "Oẽ",
+    "ÕE": "OẼ",
+    "ọe": "oẹ",
+    "Ọe": "Oẹ",
+    "ỌE": "OẸ",
+    "ùy": "uỳ",
+    "Ùy": "Uỳ",
+    "ÙY": "UỲ",
+    "úy": "uý",
+    "Úy": "Uý",
+    "ÚY": "UÝ",
+    "ủy": "uỷ",
+    "Ủy": "Uỷ",
+    "ỦY": "UỶ",
+    "ũy": "uỹ",
+    "Ũy": "Uỹ",
+    "ŨY": "UỸ",
+    "ụy": "uỵ",
+    "Ụy": "Uỵ",
+    "ỤY": "UỴ",
+}
 
-asr = FasterWhisperASR(modelsize=size, lan=language, cache_dir=args.model_cache_dir, model_dir=args.model_dir)
 
-# print(f"Loading ViSenSum model...",file=sys.stderr,end="\n",flush=True)
-
-# sensum = pipeline('text2text-generation', model='PhucMap/ViSenSum', min_length=1, max_length=256, device=device)
-
-print(f"Loading Vi-VSL model...",file=sys.stderr,end="\n",flush=True)
-
-vsl = pipeline('text2text-generation', model='PhucMap/BARTphoVi-VSL', min_length=1, max_length=256, device=device)
-
-if args.task == "translate":
-    asr.set_translate_task()
-    tgt_language = "en"
-else:
-    tgt_language = language
-
-e = time.time()
-print(f"Done. It took {round(e-t,2)} seconds.",file=sys.stderr)
-
-if args.vad:
-    print("Setting VAD filter",file=sys.stderr)
-    asr.use_vad()
+# Tone normalization
+def tone_normalization(text):
+    for i, j in dict_map.items():
+        text = text.replace(i, j)
+    return text
 
 
-min_chunk = args.min_chunk_size
+# Replace special Unicode characters
+list_of_word = {
+    'dau_sac': 'hamfinger2,hampinky,hamextfingerl,hampalml,hamshouldertop,hamreplace,hamfinger2,hampinky,hamextfingeru,hampalmd,hamshouldertop',
+    'dau_huyen': 'hamfinger2,hampinky,hamextfingerl,hampalmd,hamshouldertop,hammovedr',
+    'dau_hoi': 'hampinch12open,hammiddlefinger,hamfingerbendmod,hamringfinger,hamfingerbendmod,hamextfingeru,hampalml,hamshouldertop,hammoved,hamarcr',
+    'dau_nga': 'hamfinger2,hampinky,hamextfingero,hampalml,hamshouldertop,hammover,hamwavy,hamellipsev,hamreplace,hamfinger2,hampinky,hamextfingeru,hampalmd',
+    'dau_nang': 'hamfinger2,hampinky,hamextfingero,hampalml,hamshouldertop,hammoveo',
+}
 
-if args.buffer_trimming == "sentence":
-    tokenizer = create_tokenizer(tgt_language)
-else:
-    tokenizer = None
-online = OnlineASRProcessor(asr,tokenizer,buffer_trimming=(args.buffer_trimming, args.buffer_trimming_sec))
+
+# Read HamNoSys dataset
+with open('dataset/VSL-HamNoSys.txt', 'r', encoding='utf-8-sig') as hamnosys:
+    for line in hamnosys.readlines()[1:]:
+        temp = line.replace('\n', '').split('\t')
+        list_of_word[tone_normalization(temp[0]).lower()] = temp[-1]
 
 
-######### Text pre-processing
+# Read sign_duration dataset
+sign_duration = {}
+with open('dataset/sign_duration.csv', 'r', encoding='utf-8-sig') as duration:
+    for line in duration.readlines()[1:]:
+        temp = line.replace('\n', '').split(',')
+        sign_duration[tone_normalization(temp[0]).lower()] = round(float(temp[-1]), 2)
+
 
 mark_map = {
     'á': ['a', 'dau_sac'],
@@ -150,101 +184,6 @@ def replace_special_mark(letter):
     return letter
 
 
-dict_map = {
-    "òa": "oà",
-    "Òa": "Oà",
-    "ÒA": "OÀ",
-    "óa": "oá",
-    "Óa": "Oá",
-    "ÓA": "OÁ",
-    "ỏa": "oả",
-    "Ỏa": "Oả",
-    "ỎA": "OẢ",
-    "õa": "oã",
-    "Õa": "Oã",
-    "ÕA": "OÃ",
-    "ọa": "oạ",
-    "Ọa": "Oạ",
-    "ỌA": "OẠ",
-    "òe": "oè",
-    "Òe": "Oè",
-    "ÒE": "OÈ",
-    "óe": "oé",
-    "Óe": "Oé",
-    "ÓE": "OÉ",
-    "ỏe": "oẻ",
-    "Ỏe": "Oẻ",
-    "ỎE": "OẺ",
-    "õe": "oẽ",
-    "Õe": "Oẽ",
-    "ÕE": "OẼ",
-    "ọe": "oẹ",
-    "Ọe": "Oẹ",
-    "ỌE": "OẸ",
-    "ùy": "uỳ",
-    "Ùy": "Uỳ",
-    "ÙY": "UỲ",
-    "úy": "uý",
-    "Úy": "Uý",
-    "ÚY": "UÝ",
-    "ủy": "uỷ",
-    "Ủy": "Uỷ",
-    "ỦY": "UỶ",
-    "ũy": "uỹ",
-    "Ũy": "Uỹ",
-    "ŨY": "UỸ",
-    "ụy": "uỵ",
-    "Ụy": "Uỵ",
-    "ỤY": "UỴ",
-}
-
-
-# Tone normalization in Vietnamese
-def tone_normalization(text):
-    for i, j in dict_map.items():
-        text = text.replace(i, j)
-    return text
-
-
-# Replace special Unicode characters
-list_of_word = {
-    'dau_sac': 'hamfinger2,hampinky,hamextfingerl,hampalml,hamshouldertop,hamreplace,hamfinger2,hampinky,hamextfingeru,hampalmd,hamshouldertop',
-    'dau_huyen': 'hamfinger2,hampinky,hamextfingerl,hampalmd,hamshouldertop,hammovedr',
-    'dau_hoi': 'hampinch12open,hammiddlefinger,hamfingerbendmod,hamringfinger,hamfingerbendmod,hamextfingeru,hampalml,hamshouldertop,hammoved,hamarcr',
-    'dau_nga': 'hamfinger2,hampinky,hamextfingero,hampalml,hamshouldertop,hammover,hamwavy,hamellipsev,hamreplace,hamfinger2,hampinky,hamextfingeru,hampalmd',
-    'dau_nang': 'hamfinger2,hampinky,hamextfingero,hampalml,hamshouldertop,hammoveo',
-}
-
-
-# Read HamNoSys dataset
-with open('dataset/VSL-HamNoSys.txt', 'r', encoding='utf-8-sig') as hamnosys:
-    for line in hamnosys.readlines()[1:]:
-        temp = line.replace('\n', '').split('\t')
-        list_of_word[tone_normalization(temp[0]).lower()] = temp[-1]
-    print("Read HamNoSys dataset...")
-
-
-# Read sign_duration dataset
-sign_duration = {}
-with open('dataset/sign_duration.csv', 'r', encoding='utf-8-sig') as duration:
-    for line in duration.readlines()[1:]:
-        temp = line.replace('\n', '').split(',')
-        sign_duration[tone_normalization(temp[0]).lower()] = round(float(temp[-1]), 2)
-    print("Read sign_duration dataset...")
-
-
-# Sentence summarization
-# def sentence_summarization(text):
-#     response = sensum(str(text + ' .'))
-#     return response[0]['generated_text'].replace('.', '').strip() + ' .'
-
-
-# Vietnamese -> Sign Language
-def vi_to_vsl(text):
-    response = vsl(str(text + ' .'))
-    return response[0]['generated_text'].replace('.', '').strip() + ' .'
-
-
 # Sentence to HamNoSys SiGML
 def sentence_to_sigml(sentence):
     main = ET.Element('sigml')
@@ -275,7 +214,7 @@ def sentence_to_sigml(sentence):
     return aux
 
 
-def remove_unnecessary_token(text):
+def realtime_preprocess_transcript(text):
     # Period
     text = text.replace('!', '.')
     text = text.replace(';', '.')
@@ -286,63 +225,14 @@ def remove_unnecessary_token(text):
     # Other marks
     text = text.replace('...', '.')
 
-    # Remove special characters and syntax except commas and dots
+    # Remove special syntax
     text = text.replace('\xa0', ' ').replace('\r', ' ').replace('\n', ' ')
-    text = re.sub(r'[^\w\s,.]', '', text)
-
-    return text
-
-
-# Last normalization
-text_queue = ""
-def last_normalize(text):
-    global text_queue
-
-    text = remove_unnecessary_token(text)
-
-    # Split sentences
-    sentence_arr = list(filter(None, text.split('.')))
+    text = re.sub(r"[^\w\s.]", "", text)
 
     # Normalize and tokenize text
-    sentence_arr = [tone_normalization(text_normalize(x)).strip().lower() for x in sentence_arr]
+    text = word_tokenize(tone_normalization(text_normalize(text)).strip(), format="text").lower()
 
-    # Doing some stupid stuff with previous text and sentence array
-    if len(sentence_arr) > 1:
-        if(len(text_queue) > 0):
-            sentence_arr[0] = (text_queue + ' ' + sentence_arr[0]).strip()
-            text_queue = ""
-        if(text[-1] != '.'):
-            text_queue = sentence_arr[-1]
-            sentence_arr.pop(-1)
-    else:
-        if(text[-1] != '.'):
-            text_queue = (text_queue + ' ' + sentence_arr[0]).strip()
-            sentence_arr.pop(-1)
-        else:
-            sentence_arr[0] = (text_queue + ' ' + sentence_arr[0]).strip()
-            text_queue = ""
-    
-    if len(sentence_arr) > 0:
-        print('################### im here #####################')
-
-        # Sentence summarization
-        # sensum_sentence_arr = [tone_normalization(text_normalize(sentence_summarization(x))).lower() for x in sentence_arr]
-
-        # Vietnamese -> Sign language
-        vi_to_vsl_sentence_arr = [word_tokenize(vi_to_vsl(x), format='text') for x in sentence_arr]
-
-        print(vi_to_vsl_sentence_arr)
-
-        change_to_sigml = [sentence_to_sigml(remove_unnecessary_token(sentence.replace(' , ', ' ').replace(',', ''))) 
-                           for sentence in vi_to_vsl_sentence_arr]
-        
-        res_dict = {}
-        for i in range(len(change_to_sigml)):
-            res_dict[str(i)] = {"vi": sentence_arr[i], "vsl": vi_to_vsl_sentence_arr[i], "sigml": change_to_sigml[i]}
-        
-        return json.dumps({"type": "vsl", "sentence_arr": res_dict})
-    else:
-        return None
+    return text
 
 
 ######### Server objects
@@ -353,13 +243,11 @@ import logging
 
 class Connection:
     '''it wraps conn object'''
-    PACKET_SIZE = 65536
-
     def __init__(self, conn):
         self.conn = conn
         self.last_line = ""
 
-    async def send(self, text):
+    def send(self, text):
         '''it doesn't send the same line twice, because it was problematic in online-text-flow-events'''
         if text == self.last_line:
             return
@@ -377,7 +265,7 @@ class Connection:
                 packet = data[offset:] + b'\0' * padding_length
             else:
                 packet = data[offset:offset+PACKET_SIZE]
-            await self.conn.send(packet)
+            self.conn.send(packet)
 
     async def receive(self):
         try:
@@ -388,95 +276,61 @@ class Connection:
 
 
 import io
+import librosa
 import soundfile
+
 
 # wraps socket and ASR object, and serves one client connection. 
 # next client should be served by a new instance of this object
 class ServerProcessor:
-
-    def __init__(self, c, online_asr_proc, min_chunk):
+    def __init__(self, c):
         self.connection = c
-        self.online_asr_proc = online_asr_proc
-        self.min_chunk = min_chunk
-
         self.last_end = None
 
     async def receive_audio_chunk(self):
-        # receive all audio that is available by this time
-        # blocks operation if less than self.min_chunk seconds is available
-        # unblocks if connection is closed or a chunk is available
         out = []
         async for message in self.connection:
             print(message[:10])
             print(len(message))
-            if(sum(len(x) for x in out) > self.min_chunk * SAMPLING_RATE):
+            if(sum(len(x) for x in out) > SAMPLING_RATE):
                 break
             if not message:
                 break
-            sf = soundfile.SoundFile(io.BytesIO(message),channels=1,endian="LITTLE",samplerate=SAMPLING_RATE, subtype="PCM_16",format="RAW")
+            sf = soundfile.SoundFile(io.BytesIO(message),channels=1,endian='LITTLE',samplerate=SAMPLING_RATE,subtype="PCM_16",format="RAW")
             audio, _ = librosa.load(sf,sr=SAMPLING_RATE,dtype=np.float32)
             out.append(audio)
         if not out:
             return None
         return np.concatenate(out)
 
-    def format_output_transcript(self,o):
-        # output format in stdout is like:
-        # 0 1720 Takhle to je
-        # - the first two words are:
-        #    - beg and end timestamp of the text segment, as estimated by Whisper model. The timestamps are not accurate, but they're useful anyway
-        # - the next words: segment transcript
-
-        # This function differs from whisper_online.output_transcript in the following:
-        # succeeding [beg,end] intervals are not overlapping because ELITR protocol (implemented in online-text-flow events) requires it.
-        # Therefore, beg, is max of previous end and current beg outputed by Whisper.
-        # Usually it differs negligibly, by appx 20 ms.
-
-        if o[0] is not None:
-            beg, end = o[0]*1000,o[1]*1000
-            if self.last_end is not None:
-                beg = max(beg, self.last_end)
-
-            self.last_end = end
-            # print("%1.0f %1.0f %s" % (beg,end,o[2]),flush=True,file=sys.stderr)
-            return o[2]
-        else:
-            print(o,file=sys.stderr,flush=True)
-            return None
-
     async def send_result(self, o):
-        start_msg = time.time()
-        msg = self.format_output_transcript(o)
-        end_msg = time.time()
-        print(f"########### Done format_output_transcript in {round(end_msg - start_msg, 5)}s")
-        if msg is not None:
-            await self.connection.send(json.dumps({"type": "caption", "text": str(msg).strip()}))
-            print("############################ SENT CHUNK SUCCESSFULLY! ###############################")
-            start_normalize = time.time()
-            tempp = last_normalize(msg)
-            end_normalize = time.time()
-            print(f"########## Done last_normalize in {round(end_normalize - start_normalize, 5)}s")
-            print(tempp)
-            if tempp is not None:
-                await self.connection.send(tempp)
-                print("############################ SENT SENTENCE SUCCESSFULLY! ###############################")
+        text = ""
+    
+        try:
+            # Transcribe audio
+            segments, _ = whisper.transcribe(o, vad_filter=True, beam_size=5, language='vi', without_timestamps=True)
+            text = "".join(segment.text for segment in segments)
+        except:
+            text = ""
+        
+        text = realtime_preprocess_transcript(text).replace('_', ' ')
+        sigml = sentence_to_sigml(text)
+
+        print(text)
+
+        await self.connection.send(json.dumps({'sigml': sigml, 'text': text}))
 
     async def process(self):
         # handle one client connection
-        self.online_asr_proc.init()
         while True:
             a = await self.receive_audio_chunk()
             if a is None:
                 print("break here",file=sys.stderr)
                 break
             print(f"Size of audio received: {len(a)}")
-            self.online_asr_proc.insert_audio_chunk(a)
-            start_process = time.time()
-            o = online.process_iter()
-            end_process = time.time()
-            print(f"########## Done online_process in {round(end_process - start_process, 5)}s")
+            
             try:
-                await self.send_result(o)
+                await self.send_result(a)
             except BrokenPipeError:
                 print("broken pipe -- connection closed?",file=sys.stderr)
                 break
@@ -486,17 +340,17 @@ class ServerProcessor:
 level = logging.INFO
 logging.basicConfig(level=level)
 
-# server loop
 
+# server loop
 async def handler(websocket):
-    global text_queue
-    text_queue = ""
-    proc = ServerProcessor(websocket, online, min_chunk)
+    proc = ServerProcessor(websocket)
     await proc.process()
 
+
 async def main():
-    async with serve(handler, args.host, args.port, ping_interval=None):
+    async with serve(handler, "127.0.0.1", 5000):
         await asyncio.Future()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
