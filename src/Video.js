@@ -88,6 +88,7 @@ class Video extends Component {
 		this.mediaStream = null
 		this.audioDataCache = []
 		this.StopCommand = "12122006"
+		this.signWordArr = ""
 
 		this.getPermissions()
 	}
@@ -162,7 +163,7 @@ class Video extends Component {
 
 		return signed16Array;
 	}
-	
+
 
 	handleWSServer = (stream) => {
 		this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
@@ -205,7 +206,7 @@ class Video extends Component {
 
 	stopRecordAudio = function () {
 		if (this.audioContext) {
-			this.recorder.onaudioprocess = () => {};
+			this.recorder.onaudioprocess = () => { };
 			this.webSocket.send(this.StopCommand)
 			console.log("audio node closed");
 		}
@@ -636,25 +637,30 @@ class Video extends Component {
 	}
 
 	handleSignWordChange = (data) => {
-		console.dir(data);
 		this.setState({ signWord: data });
-		// alert(this.signWord);
-		// this.setState({signWord : e})
-		// console.dir(this.signWord)
+		console.log(this.state.signWord);
+		if (this.signWordArr === '') this.signWordArr = this.signWordArr + this.state.signWord;
+		else {
+			this.signWordArr += '/';
+			this.signWordArr = this.signWordArr + this.state.signWord;
+		}
+		console.log(this.signWordArr);
 	}
-
-	// componentDidMount() {
-	// 	setInterval(() => {console.log(this.state.signWord)}, 500);
-	// }
-
-	// componentDidUpdate = (prevProps) => {  
-	// 	console.log('prevProps',prevProps);
-	// 	console.log('this props',this.props);
-	//   }
-
 	async componentDidMount() {
 		const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
 		this.handleWSServer(stream);
+	}
+
+	handleSendSignSen = async () => {
+		let formData = new FormData();
+        formData.append("text", this.signWordArr);
+		const post = await fetch('https://sharp-pure-goat.ngrok-free.app/sentence', {
+            method: 'POST',
+            body: formData,
+        })
+		const response = await post.json();
+
+		console.dir("handleSendSignSen: " + response.result);
 	}
 
 	render() {
@@ -758,6 +764,8 @@ class Video extends Component {
 									{/* <a className='user-name'>{this.state.username}</a> */}
 								</div>
 							</Row>
+
+							<button style={{position:"absolute",top:"300px", left:"50px", height:"100px", background:"white", color:"black"}} onClick={this.handleSendSignSen}>Send {this.signWordArr} sentence</button>
 
 							<Draggable>
 								<div id="canvas-wrapper">
