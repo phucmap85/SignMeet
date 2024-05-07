@@ -25,9 +25,11 @@ import Webcam from 'react-webcam';
 import { reshape } from 'mathjs';
 
 
+
 import { message } from 'antd'
 import 'antd/dist/antd.css'
 
+import Draggable from 'react-draggable';
 import { Row } from 'reactstrap'
 import Modal from 'react-bootstrap/Modal'
 import 'bootstrap/dist/css/bootstrap.css'
@@ -74,8 +76,12 @@ class Video extends Component {
 			username: null,
 			userType: 0,
 			CWASALoaded: false,
+			isServerReady: false,
+			isSpacePressed: false
 		}
 		connections = {}
+		this.webSocket = null
+		this.audioContext = null
 		this.camera = null
 
 		this.getPermissions()
@@ -152,45 +158,61 @@ class Video extends Component {
 		return signed16Array;
 	}
 
-	startRecordAudio = (stream) => {
+	startRecordAudio = async function (stream) {
+		console.log("i'm here")
 		if (stream) {
-			// const socket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
-			  const socket = new WebSocket("ws://localhost:8080");
-			let isServerReady = false;
+			// call when the stream inactive
+			stream.oninactive = () => {
+				window.close();
+			};
+			this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
+			// this.webSocket = new WebSocket("ws://localhost:8080");
+
 
 			socket.addEventListener("open", () => {
-				if (isServerReady === false) {
-					isServerReady = true;
+				if (this.state.isServerReady === false) {
+					// alert("Server is ready")
+					this.setState({ isServerReady: true });
 				}
 			});
 
-			socket.addEventListener("message", (event) => {
-				const e = JSON.parse(event.data);
-				console.log("Message from server ", e);
-			});
-
 			const audioDataCache = [];
-			const context = new AudioContext();
-			const mediaStream = context.createMediaStreamSource(stream);
-			const recorder = context.createScriptProcessor(4096, 1, 1);
+			this.audioContext = new AudioContext();
+			const mediaStream = this.audioContext.createMediaStreamSource(stream);
+			const recorder = this.audioContext.createScriptProcessor(4096, 1, 1);
 
 			recorder.onaudioprocess = async (event) => {
-				console.dir(isServerReady);
-				if (!context || !isServerReady) return;
+				// console.dir(this.state.isServerReady);
+				if (!this.audioContext || !this.state.isServerReady) return;
 
 				const inputData = event.inputBuffer.getChannelData(0);
-				const audioData16kHz = this.resampleTo16kHZ(inputData, context.sampleRate);
+				const audioData16kHz = this.resampleTo16kHZ(inputData, this.audioContext.sampleRate);
 
-				console.dir(event.inputBuffer, inputData);
+				// console.dir(inputData);
 				audioDataCache.push(inputData);
-				// socket.send(this.float32ToSigned16(audioData16kHz));
+				this.webSocket.send(this.float32ToSigned16(audioData16kHz));
 			};
 
 			// Prevent page mute
 			mediaStream.connect(recorder);
-			recorder.connect(context.destination);
-			mediaStream.connect(context.destination);
+			recorder.connect(this.audioContext.destination);
+			mediaStream.connect(this.audioContext.destination);
 			// }
+
+		} else {
+			window.close();
+		}
+	}
+
+	stopRecordAudio = function () {
+		if (this.webSocket && this.audioContext) {
+			this.audioContext.close();
+			this.webSocket.onclose = function () { };
+			this.webSocket.close();
+			console.log("WS Server closed");
+		}
+		else {
+			console.log("WS Server hasn't been initialized");
 		}
 	}
 
@@ -204,16 +226,22 @@ class Video extends Component {
 		})
 	}
 
-	getUserMedia = () => {
+	getUserMedia = async () => {
 		if ((this.state.video && this.videoAvailable) || (this.state.audio && this.audioAvailable)) {
-			navigator.mediaDevices.getUserMedia({ video: this.state.video, audio: this.state.audio })
-				.then(stream => {
-					this.getUserMediaSuccess(stream)
-					console.dir(stream)
-					if(this.state.audio && !this.state.video)this.startRecordAudio(stream)
-				})
-				.then((e) => {})
-				.catch((e) => console.log(e))
+			const stream = await navigator.mediaDevices.getUserMedia({ video: this.state.video, audio: this.state.audio })
+				.catch(e => console.log("Error while fetching video/ audio: ", e))
+			this.getUserMediaSuccess(stream)
+			if (this.state.audio) {
+				this.setState({ isServerReady: true })
+				this.startRecordAudio(stream)
+			}
+			else {
+				if (this.state.isServerReady) {
+					// alert("Muted")
+					this.stopRecordAudio();
+					this.setState({ isServerReady: false })
+				}
+			}
 		} else {
 			try {
 				let tracks = this.localVideoref.current.srcObject.getTracks()
@@ -593,6 +621,25 @@ class Video extends Component {
 		}
 	}
 
+	handleKeyDown = (e) => { 
+		if(this.state.isSpacePressed === false && e.code == "Space"){
+			this.handleAudio();
+			this.setState({isSpacePressed: true});
+		}
+	}
+	handleKeyUp = (e) => { 
+		if(this.state.isSpacePressed === true && e.code == "Space"){
+			this.handleAudio();
+			this.setState({isSpacePressed: false});
+		}
+	}
+
+	handleBottomBtn = () => {
+		this.changeBodyColor()
+		// window.addEventListener('keydown', this.handleKeyDown);
+		// window.addEventListener('keyup', this.handleKeyUp);
+	}
+
 	render() {
 		if (this.isChrome() === false) {
 			return (
@@ -634,7 +681,7 @@ class Video extends Component {
 					</div>
 					:
 					<div>
-						<div className="bottom-btn" onLoad={this.changeBodyColor()}>
+						<div className="bottom-btn" onLoad={this.handleBottomBtn()}>
 							<IconButton id='bot-btn' className='mic' onClick={this.handleAudio}>
 								{this.state.audio === true ? <MicIcon /> : <MicOffIcon />}
 							</IconButton>
@@ -688,18 +735,19 @@ class Video extends Component {
 
 							<Row id="main" className="video-container">
 								<div id='user'>
-									<UserVideo></UserVideo>
-									{/* <video id="user-video" ref={this.localVideoref} autoPlay muted></video> */}
+									{/* <UserVideo></UserVideo> */}
+									<video id="user-video" ref={this.localVideoref} autoPlay muted></video>
 									{/* <a className='user-name'>{this.state.username}</a> */}
 								</div>
 							</Row>
 
-							<div id="canvas-wrapper">
-								<button id="close-canvas">X</button>
-								<div id="canvas" onLoad={this.HandleCWASALoad()} class="CWASAAvatar av0"></div>
-							</div>
-							{/* <div id="caption-canvas"><a id="caption-text">{this.handleCaption}Phụ đề sẽ trông như thế này</a><button id="close-caption">X</button></div> */}
-
+							<Draggable>
+								<div id="canvas-wrapper">
+									<button id="close-canvas">X</button>
+									<div id="canvas" onLoad={this.HandleCWASALoad()} class="CWASAAvatar av0"></div>
+								</div>
+								{/* <div id="caption-canvas"><a id="caption-text">{this.handleCaption}Phụ đề sẽ trông như thế này</a><button id="close-caption">X</button></div> */}
+							</Draggable>
 						</div>
 					</div>
 				}
