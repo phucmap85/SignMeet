@@ -5,7 +5,7 @@ import time
 import os
 import tensorflow as tf
 
-model = tf.keras.models.load_model("best_model.h5")
+model = tf.keras.models.load_model("RegVNSL.h5")
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
