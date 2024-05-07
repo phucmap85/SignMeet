@@ -84,6 +84,10 @@ class Video extends Component {
 		this.webSocket = null
 		this.audioContext = null
 		this.camera = null
+		this.recorder = null
+		this.mediaStream = null
+		this.audioDataCache = []
+		this.StopCommand = "12122006"
 
 		this.getPermissions()
 	}
@@ -158,62 +162,55 @@ class Video extends Component {
 
 		return signed16Array;
 	}
+	
 
-	startRecordAudio = async function (stream) {
-		console.log("i'm here")
-		if (stream) {
-			// call when the stream inactive
-			stream.oninactive = () => {
-				window.close();
-			};
-			this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
-			// this.webSocket = new WebSocket("ws://localhost:8080");
+	handleWSServer = (stream) => {
+		this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
+		// this.webSocket = new WebSocket("ws://localhost:8080");
 
+		this.webSocket.addEventListener("message", (data) => {
+			console.dir(data.data);
+		});
 
-			socket.addEventListener("open", () => {
-				if (this.state.isServerReady === false) {
-					// alert("Server is ready")
-					this.setState({ isServerReady: true });
-				}
-			});
+		this.audioContext = new AudioContext();
+		this.mediaStream = this.audioContext.createMediaStreamSource(stream);
+		this.recorder = this.audioContext.createScriptProcessor(4096, 1, 1);
 
-			const audioDataCache = [];
-			this.audioContext = new AudioContext();
-			const mediaStream = this.audioContext.createMediaStreamSource(stream);
-			const recorder = this.audioContext.createScriptProcessor(4096, 1, 1);
+		alert("server connected")
 
-			recorder.onaudioprocess = async (event) => {
-				// console.dir(this.state.isServerReady);
-				if (!this.audioContext || !this.state.isServerReady) return;
+		// Prevent page mute
+		this.mediaStream.connect(this.recorder);
+		this.recorder.connect(this.audioContext.destination);
+		// this.mediaStream.connect(this.audioContext.destination);
 
-				const inputData = event.inputBuffer.getChannelData(0);
-				const audioData16kHz = this.resampleTo16kHZ(inputData, this.audioContext.sampleRate);
+		// socket.addEventListener("open", () => {
+		// });
 
-				// console.dir(inputData);
-				audioDataCache.push(inputData);
-				this.webSocket.send(this.float32ToSigned16(audioData16kHz));
-			};
+		return true;
+	}
+	startRecordAudio = async function () {
+		// console.log("i'm here")
+		this.recorder.onaudioprocess = async (event) => {
+			if (!this.audioContext) return;
 
-			// Prevent page mute
-			mediaStream.connect(recorder);
-			recorder.connect(this.audioContext.destination);
-			mediaStream.connect(this.audioContext.destination);
-			// }
+			const inputData = event.inputBuffer.getChannelData(0);
+			const audioData16kHz = this.resampleTo16kHZ(inputData, this.audioContext.sampleRate);
 
-		} else {
-			window.close();
-		}
+			console.dir(inputData);
+			this.audioDataCache.push(inputData);
+			this.webSocket.send(this.float32ToSigned16(audioData16kHz));
+		};
+		window.close();
 	}
 
 	stopRecordAudio = function () {
-		if (this.webSocket && this.audioContext) {
-			this.audioContext.close();
-			this.webSocket.onclose = function () { };
-			this.webSocket.close();
-			console.log("WS Server closed");
+		if (this.audioContext) {
+			this.recorder.onaudioprocess = () => {};
+			this.webSocket.send(this.StopCommand)
+			console.log("audio node closed");
 		}
 		else {
-			console.log("WS Server hasn't been initialized");
+			console.log("there's no audio context");
 		}
 	}
 
@@ -233,15 +230,10 @@ class Video extends Component {
 				.catch(e => console.log("Error while fetching video/ audio: ", e))
 			this.getUserMediaSuccess(stream)
 			if (this.state.audio) {
-				this.setState({ isServerReady: true })
-				this.startRecordAudio(stream)
+				this.startRecordAudio()
 			}
 			else {
-				if (this.state.isServerReady) {
-					// alert("Muted")
-					this.stopRecordAudio();
-					this.setState({ isServerReady: false })
-				}
+				this.stopRecordAudio();
 			}
 		} else {
 			try {
@@ -622,39 +614,48 @@ class Video extends Component {
 		}
 	}
 
-	handleKeyDown = (e) => { 
-		if(this.state.isSpacePressed === false && e.code == "Space"){
+	handleKeyDown = (e) => {
+		if (this.state.isSpacePressed === false && e.code == "Space") {
+			console.log("started")
 			this.handleAudio();
-			this.setState({isSpacePressed: true});
+			this.setState({ isSpacePressed: true });
 		}
 	}
-	handleKeyUp = (e) => { 
-		if(this.state.isSpacePressed === true && e.code == "Space"){
+	handleKeyUp = (e) => {
+		if (this.state.isSpacePressed === true && e.code == "Space") {
+			console.log("ended")
 			this.handleAudio();
-			this.setState({isSpacePressed: false});
+			this.setState({ isSpacePressed: false });
 		}
 	}
 
 	handleBottomBtn = () => {
 		this.changeBodyColor()
-		// window.addEventListener('keydown', this.handleKeyDown);
-		// window.addEventListener('keyup', this.handleKeyUp);
+		window.addEventListener('keydown', this.handleKeyDown);
+		window.addEventListener('keyup', this.handleKeyUp);
 	}
 
-	handleSignWordChange = (e) => {
-		alert(e)
+	handleSignWordChange = (data) => {
+		console.dir(data);
+		this.setState({ signWord: data });
+		// alert(this.signWord);
 		// this.setState({signWord : e})
 		// console.dir(this.signWord)
 	}
 
-	componentDidMount() {
-		setInterval(() => {console.log(this.state.signWord)}, 500);
-	}
+	// componentDidMount() {
+	// 	setInterval(() => {console.log(this.state.signWord)}, 500);
+	// }
 
-	componentDidUpdate = (prevProps) => {  
-		console.log('prevProps',prevProps);
-		console.log('this props',this.props);
-	  }
+	// componentDidUpdate = (prevProps) => {  
+	// 	console.log('prevProps',prevProps);
+	// 	console.log('this props',this.props);
+	//   }
+
+	async componentDidMount() {
+		const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+		this.handleWSServer(stream);
+	}
 
 	render() {
 		if (this.isChrome() === false) {
@@ -751,9 +752,9 @@ class Video extends Component {
 
 							<Row id="main" className="video-container">
 								<div id='user'>
-									{/* <UserVideo sign={this.handleSignWordChange} ></UserVideo>
-									<h1 style={{color: "white", background: "red"}}>{this.state.signWord}</h1> */}
-									<video id="user-video" ref={this.localVideoref} autoPlay muted></video>
+									<UserVideo onDataReceived={this.handleSignWordChange} ></UserVideo>
+									{/* <h1 style={{color: "white", background: "red"}}>{this.state.signWord}</h1> */}
+									{/* <video id="user-video" ref={this.localVideoref} autoPlay muted></video> */}
 									{/* <a className='user-name'>{this.state.username}</a> */}
 								</div>
 							</Row>

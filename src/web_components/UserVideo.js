@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, Component, createRef } from 'react';
 import { Holistic } from '@mediapipe/holistic';
 import * as hlt from '@mediapipe/holistic';
 import * as cam from '@mediapipe/camera_utils';
@@ -81,19 +81,18 @@ class UserVideo extends Component {
         })
         const response = await post.json();
         if (response.result !== "None") {
-            // alert("Word set");
-            setSignWord(response.result);
-            props.sign(signWord);
-            console.dir(tmp);
+            this.setState({signWord: response.result});
+
+            this.props.onDataReceived(this.signWord)
         }
         console.dir(response);
     }
 
     onResults = (results) => {
-        const videoWidth = webcamRef.current.video.videoWidth;
-        const videoHeight = webcamRef.current.video.videoHeight;
+        const videoWidth = this.webcamRef.current.video.videoWidth;
+        const videoHeight = this.webcamRef.current.video.videoHeight;
 
-        let timeStep = makeLandmarkTimestep(results);
+        let timeStep = this.makeLandmarkTimestep(results);
 
         const face = timeStep.face, pose = timeStep.pose;
         const lh = timeStep.lh, rh = timeStep.rh;
@@ -102,36 +101,36 @@ class UserVideo extends Component {
         let lip_y_min = Math.min(face[37][1], face[267][1]), lip_y_max = face[17][1]
 
         // console.log(lip_x_min, lip_x_max, lip_y_min, lip_y_max)
-        console.log(getTime() - t0, on_lip);
+        console.log(getTime() - this.t0, this.on_lip);
 
         if (rh[12][0] > 0 && rh[12][1] > 0 && rh[12][0] >= lip_x_min && rh[12][0] <= lip_x_max
             && rh[12][1] >= lip_y_min && rh[12][1] <= lip_y_max) {
 
-            if (!on_countdown) {
-                t0 = getTime();
-                on_countdown = 1;
+            if (!this.on_countdown) {
+                this.t0 = getTime();
+                this.on_countdown = 1;
             }
 
-            if (0.5 - getTime() + t0 <= 0 && !on_passed) {
-                on_passed = 1;
-                on_lip = 1 - on_lip;
+            if (0.5 - getTime() + this.t0 <= 0 && !this.on_passed) {
+                this.on_passed = 1;
+                this.on_lip = 1 - this.on_lip;
             }
         } else {
-            on_passed = 0;
-            on_countdown = 0;
+            this.on_passed = 0;
+            this.on_countdown = 0;
         }
 
-        if (on_lip) {
-            if (!on_countdown) {
+        if (this.on_lip) {
+            if (!this.on_countdown) {
                 let temp_pose = pose.flat(), temp_lh = lh.flat(), temp_rh = rh.flat();
                 lm_arr.push(temp_pose.concat(temp_lh, temp_rh));
             }
         } else {
             if (lm_arr.length > 0) {
-                pre_num_of_frames = lm_arr.length;
-                console.log(pre_num_of_frames, lm_arr);
+                this.pre_num_of_frames = lm_arr.length;
+                console.log(this.pre_num_of_frames, lm_arr);
 
-                sendHTTPReq(lm_arr);
+                this.sendHTTPReq(lm_arr);
 
                 // runModel(lm_arr).then(res => {
                 //     console.log("Prediction: ", indexOfMax(res));
@@ -142,11 +141,11 @@ class UserVideo extends Component {
         }
 
         // Set canvas width
-        canvasRef.current.width = videoWidth;
-        canvasRef.current.height = videoHeight;
+        this.canvasRef.current.width = videoWidth;
+        this.canvasRef.current.height = videoHeight;
 
 
-        const canvasElement = canvasRef.current;
+        const canvasElement = this.canvasRef.current;
         const canvasCtx = canvasElement.getContext("2d");
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -190,17 +189,17 @@ class UserVideo extends Component {
             minTrackingConfidence: 0.5
         })
 
-        holistic.onResults(onResults)
+        holistic.onResults(this.onResults)
 
-        if (typeof webcamRef.current !== "undefined" && webcamRef.current !== null) {
-            camera = new cam.Camera(webcamRef.current.video, {
+        if (typeof this.webcamRef.current !== "undefined" && this.webcamRef.current !== null) {
+            this.camera = new cam.Camera(this.webcamRef.current.video, {
                 onFrame: async () => {
-                    await holistic.send({ image: webcamRef.current.video });
+                    await holistic.send({ image: this.webcamRef.current.video });
                 },
                 width: 1280,
                 height: 720,
             });
-            camera.start();
+            this.camera.start();
         }
     }
 
@@ -208,9 +207,9 @@ class UserVideo extends Component {
     render() {
         return (
             <div id='user-video'>
-                <Webcam ref={webcamRef} width={1280} height={720} hidden style={{ position: "absolute" }} />
-                <canvas ref={canvasRef} style={{ borderRadius: "2%" }} />
-                <h1 style={{ transform: "rotateY(180deg)", color: "white" }}>{signWord}</h1>
+                <Webcam ref={this.webcamRef} width={1280} height={720} hidden style={{ position: "absolute" }} />
+                <canvas ref={this.canvasRef} style={{ borderRadius: "2%" }} />
+                <h1 style={{ transform: "rotateY(180deg)", color: "white" }}>{this.state.signWord}</h1>
             </div>
         );
     }
