@@ -1,48 +1,37 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Holistic } from '@mediapipe/holistic';
 import * as hlt from '@mediapipe/holistic';
 import * as cam from '@mediapipe/camera_utils';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils'
-import * as tf from '@tensorflow/tfjs';
 import Webcam from 'react-webcam';
-import { reshape } from 'mathjs';
 import './UserVideo.css';
-import axios from 'axios';
-
-
-function indexOfMax(arr) {
-    if (arr.length === 0) return -1;
-
-    var max = arr[0], maxIndex = 0;
-
-    for (var i = 1; i < arr.length; i++) {
-        if (arr[i] > max) {
-            maxIndex = i;
-            max = arr[i];
-        }
-    }
-
-    return maxIndex;
-}
-
-async function runModel(landmarks) {
-    const model = await tf.loadLayersModel('https://raw.githubusercontent.com/PL508/RegVNSL/master/model.json');
-
-    landmarks = reshape(landmarks, [-1, landmarks.length, landmarks[0].length]);
-
-    return model.predict(tf.tensor(landmarks)).dataSync();
-}
 
 function getTime() {
     return Date.now() / 1000;
 }
 
-function UserVideo() {
-    const webcamRef = useRef(null);
-    const canvasRef = useRef(null);
-    var camera = null;
+let lm_arr = [];
 
-    function makeLandmarkTimestep(results) {
+class UserVideo extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            signWord: ''
+        }
+        this.webcamRef = createRef();
+        this.canvasRef = createRef();
+        this.camera = null;
+        this.t0 = getTime();
+        this.on_countdown = 0;
+        this.on_lip = 0;
+        this.on_passed = 0;
+        this.pre_num_of_frames = 0;
+
+        lm_arr = [];
+    }
+
+    makeLandmarkTimestep = (results) => {
         let face = [], pose = [], lh = [], rh = [];
 
 
@@ -83,10 +72,7 @@ function UserVideo() {
         return { face, pose, lh, rh };
     }
 
-    let lm_arr = [];
-    let t0 = getTime(), on_countdown = 0, on_lip = 0, on_passed = 0, pre_num_of_frames = 0;
-
-    async function sendHTTPReq(data) {
+    sendHTTPReq = async (data) => {
         let formData = new FormData();
         formData.append("arr", data);
         const post = await fetch('https://sharp-pure-goat.ngrok-free.app/word', {
@@ -94,10 +80,16 @@ function UserVideo() {
             body: formData,
         })
         const response = await post.json();
+        if (response.result !== "None") {
+            // alert("Word set");
+            setSignWord(response.result);
+            props.sign(signWord);
+            console.dir(tmp);
+        }
         console.dir(response);
     }
 
-    function onResults(results) {
+    onResults = (results) => {
         const videoWidth = webcamRef.current.video.videoWidth;
         const videoHeight = webcamRef.current.video.videoHeight;
 
@@ -141,11 +133,11 @@ function UserVideo() {
 
                 sendHTTPReq(lm_arr);
 
-                    // runModel(lm_arr).then(res => {
-                    //     console.log("Prediction: ", indexOfMax(res));
-                    // });
+                // runModel(lm_arr).then(res => {
+                //     console.log("Prediction: ", indexOfMax(res));
+                // });
 
-                    (lm_arr = []).length = 0;
+                (lm_arr = []).length = 0;
             }
         }
 
@@ -185,7 +177,7 @@ function UserVideo() {
     }
 
 
-    useEffect(() => {
+    componentDidMount() {
         const holistic = new Holistic({
             locateFile: (file) => {
                 return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
@@ -210,15 +202,18 @@ function UserVideo() {
             });
             camera.start();
         }
-    }, [])
+    }
 
 
-    return (
-        <div id='user-video'>
-            <Webcam ref={webcamRef} width={1280} height={720} hidden style={{ position: "absolute" }} />
-            <canvas ref={canvasRef} style={{ borderRadius: "2%" }} />
-        </div>
-    );
+    render() {
+        return (
+            <div id='user-video'>
+                <Webcam ref={webcamRef} width={1280} height={720} hidden style={{ position: "absolute" }} />
+                <canvas ref={canvasRef} style={{ borderRadius: "2%" }} />
+                <h1 style={{ transform: "rotateY(180deg)", color: "white" }}>{signWord}</h1>
+            </div>
+        );
+    }
 }
 
 

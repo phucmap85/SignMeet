@@ -77,7 +77,8 @@ class Video extends Component {
 			userType: 0,
 			CWASALoaded: false,
 			isServerReady: false,
-			isSpacePressed: false
+			isSpacePressed: false,
+			signWord: ''
 		}
 		connections = {}
 		this.webSocket = null
@@ -640,6 +641,21 @@ class Video extends Component {
 		// window.addEventListener('keyup', this.handleKeyUp);
 	}
 
+	handleSignWordChange = (e) => {
+		alert(e)
+		// this.setState({signWord : e})
+		// console.dir(this.signWord)
+	}
+
+	componentDidMount() {
+		setInterval(() => {console.log(this.state.signWord)}, 500);
+	}
+
+	componentDidUpdate = (prevProps) => {  
+		console.log('prevProps',prevProps);
+		console.log('this props',this.props);
+	  }
+
 	render() {
 		if (this.isChrome() === false) {
 			return (
@@ -735,7 +751,8 @@ class Video extends Component {
 
 							<Row id="main" className="video-container">
 								<div id='user'>
-									{/* <UserVideo></UserVideo> */}
+									{/* <UserVideo sign={this.handleSignWordChange} ></UserVideo>
+									<h1 style={{color: "white", background: "red"}}>{this.state.signWord}</h1> */}
 									<video id="user-video" ref={this.localVideoref} autoPlay muted></video>
 									{/* <a className='user-name'>{this.state.username}</a> */}
 								</div>
