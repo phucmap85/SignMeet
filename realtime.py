@@ -4,7 +4,6 @@ import asyncio
 import sys
 import json
 import re
-import argparse
 import numpy as np
 
 from faster_whisper import WhisperModel
@@ -13,13 +12,11 @@ from underthesea import text_normalize, word_tokenize
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
-parser = argparse.ArgumentParser()
-
 SAMPLING_RATE = 16000
 PACKET_SIZE = 65536
 
 device = 0 if torch.cuda.is_available() else -1
-whisper = WhisperModel("PhucMap/phothitham-tiny-ct2", device=("cuda" if device == 0 else "cpu"),
+whisper = WhisperModel("PhucMap/phothitham-medium-ct2", device=("cuda" if device == 0 else "cpu"),
                        compute_type=("float16" if device == 0 else "int8"))
 
 dict_map = {
@@ -292,7 +289,7 @@ class ServerProcessor:
         async for message in self.connection:
             print(message[:10])
             print(len(message))
-            if(sum(len(x) for x in out) > SAMPLING_RATE):
+            if(len(message) < 10):
                 break
             if not message:
                 break
@@ -316,7 +313,7 @@ class ServerProcessor:
         text = realtime_preprocess_transcript(text).replace('_', ' ')
         sigml = sentence_to_sigml(text)
 
-        print(text)
+        print("############################## " + text + " ##############################")
 
         await self.connection.send(json.dumps({'sigml': sigml, 'text': text}))
 
