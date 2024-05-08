@@ -162,19 +162,13 @@ class UserVideo extends Component {
                 this.on_countdown_hand = 1;
             }
 
-            if (2.0 - getTime() + this.t0_hand <= 0 && !this.on_passed_hand) {
+            if (1.0 - getTime() + this.t0_hand <= 0 && !this.on_passed_hand) {
                 this.on_passed_hand = 1;
                 this.on_enter = 1 - this.on_enter;
             }
         } else {
             this.on_passed_hand = 0;
             this.on_countdown_hand = 0;
-        }
-
-        if (this.on_enter) {
-            // Send request here
-            console.log('da gui');
-            this.on_enter = 0;
         }
 
         // Set canvas width
@@ -193,6 +187,36 @@ class UserVideo extends Component {
             canvasElement.width,
             canvasElement.height
         );
+
+        if(this.on_enter) {
+            canvasCtx.beginPath();
+            canvasCtx.rect(0, 50, 50, 50);
+            canvasCtx.fillStyle = "#7F00FF";
+            canvasCtx.fill();
+            
+            // Send request here
+            console.log('da gui');
+            this.on_enter = 0;
+        }
+
+        if(this.on_countdown_hand || this.on_countdown) {
+            canvasCtx.beginPath();
+            canvasCtx.rect(0, 0, 50, 50);
+            canvasCtx.fillStyle = "#00FF00";
+            canvasCtx.fill();
+        } else {
+            canvasCtx.beginPath();
+            canvasCtx.rect(0, 0, 50, 50);
+            canvasCtx.fillStyle = "red";
+            canvasCtx.fill();
+        }
+
+        if(this.on_lip) {
+            canvasCtx.beginPath();
+            canvasCtx.rect(50, 0, 50, 50);
+            canvasCtx.fillStyle = "blue";
+            canvasCtx.fill();
+        }
 
         var centerX = 25;
         var centerY = 267;
