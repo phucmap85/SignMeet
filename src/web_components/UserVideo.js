@@ -196,6 +196,8 @@ class UserVideo extends Component {
             
             // Send request here
             console.log('da gui');
+            this.props.onSendSignWord()
+
             this.on_enter = 0;
         }
 

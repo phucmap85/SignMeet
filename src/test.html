@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div>
+        <canvas id="myCanvas" width="1280" height="720" style="border:1px solid black; transform: rotateY(180deg);">
+        </canvas>
+    </div>
+    <script>
+        var canvas = document.getElementById('myCanvas');
+        var ctx = canvas.getContext('2d');
+
+        // Draw circle
+        var centerX = 50;
+        var centerY = 400;
+        var radius = 20;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'lightblue';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'black';
+        ctx.stroke();
+
+        // Draw arrow
+        var arrowLength = radius * 1.3;
+        var arrowWidth = radius * 0.5;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX - radius * 0.5, centerY);
+        ctx.lineTo(centerX - radius + arrowLength, centerY - arrowWidth);
+        ctx.lineTo(centerX - radius + arrowLength, centerY + arrowWidth);
+        ctx.closePath();
+        ctx.fillStyle = 'black';
+        ctx.fill();
+
+
+
+    </script>
+</body>
+
+</html>

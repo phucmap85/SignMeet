@@ -78,7 +78,8 @@ class Video extends Component {
 			CWASALoaded: false,
 			isServerReady: false,
 			isSpacePressed: false,
-			signWord: ''
+			signWord: '',
+			CWASALoaded: false,
 		}
 		connections = {}
 		this.webSocket = null
@@ -89,6 +90,8 @@ class Video extends Component {
 		this.audioDataCache = []
 		this.StopCommand = "12122006"
 		this.signWordArr = ""
+		this.sigml = ""
+		this.sigmlText = ""
 
 		this.getPermissions()
 	}
@@ -166,33 +169,39 @@ class Video extends Component {
 
 
 	handleWSServer = (stream) => {
-		this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
-		// this.webSocket = new WebSocket("ws://localhost:8080");
+		if (this.state.userType === 0) {
+			this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
+			// this.webSocket = new WebSocket("ws://localhost:8080");
 
-		this.webSocket.addEventListener("message", (data) => {
-			console.dir(data.data);
-		});
+			this.webSocket.addEventListener("message", (data) => {
+				console.dir(data.data);
+				const response = JSON.parse(data.data);
+				this.sigml = response.sigml;
+				this.sigmlText = response.text;
+				socket.emit("sigml", response.sigml);
+				socket.emit("caption-text", 1, response.text);
+			});
 
-		this.audioContext = new AudioContext();
-		this.mediaStream = this.audioContext.createMediaStreamSource(stream);
-		this.recorder = this.audioContext.createScriptProcessor(4096, 1, 1);
+			this.audioContext = new AudioContext();
+			this.mediaStream = this.audioContext.createMediaStreamSource(stream);
+			this.recorder = this.audioContext.createScriptProcessor(4096, 1, 1);
 
-		alert("server connected")
+			// alert("server connected")
 
-		// Prevent page mute
-		this.mediaStream.connect(this.recorder);
-		this.recorder.connect(this.audioContext.destination);
-		// this.mediaStream.connect(this.audioContext.destination);
+			// Prevent page mute
+			this.mediaStream.connect(this.recorder);
+			this.recorder.connect(this.audioContext.destination);
+			// this.mediaStream.connect(this.audioContext.destination);
 
-		// socket.addEventListener("open", () => {
-		// });
+			// socket.addEventListener("open", () => {
+			// });
 
-		return true;
+		}
 	}
 	startRecordAudio = async function () {
 		// console.log("i'm here")
 		this.recorder.onaudioprocess = async (event) => {
-			if (!this.audioContext) return;
+			if (!this.audioContext || this.state.userType) return;
 
 			const inputData = event.inputBuffer.getChannelData(0);
 			const audioData16kHz = this.resampleTo16kHZ(inputData, this.audioContext.sampleRate);
@@ -201,7 +210,6 @@ class Video extends Component {
 			this.audioDataCache.push(inputData);
 			this.webSocket.send(this.float32ToSigned16(audioData16kHz));
 		};
-		window.close();
 	}
 
 	stopRecordAudio = function () {
@@ -410,6 +418,25 @@ class Video extends Component {
 				}
 			})
 
+			socket.on('caption-text', (type, data) => {
+				const Caption = document.querySelector("#caption-text");
+				if (Caption && this.state.userType === type) {
+					Caption.innerHTML = data;
+					console.dir(data);
+				}
+			})
+
+			socket.on('sigml', (sigml) => {
+				console.dir("sigml data: ", sigml);
+				if (this.state.userType === 1) {
+					console.log(this.state.CWASALoaded)
+					// if (this.state.CWASALoaded) {
+					CWASA.playSiGMLText(sigml, 0);
+					// }
+
+				}
+			});
+
 			socket.on('user-joined', (id, clients) => {
 				clients.forEach((socketListId) => {
 					connections[socketListId] = new RTCPeerConnection(peerConnectionConfig)
@@ -610,7 +637,21 @@ class Video extends Component {
 	HandleCWASALoad = () => {
 		if (this.state.CWASALoaded === false) {
 			console.log("CWASALoaded")
-			CWASA.init();
+			//Set video start state
+			CWASA.init({
+				useClientConfig: true,
+				avSettings: { initSpeed: +1.4 }
+			});
+
+			//Loading hanlder
+
+			const doneLoad = () => {
+				if (this.state.CWASALoaded === false) {
+					this.setState({ CWASALoaded: true })
+				}
+			}
+
+			CWASA.addHook("avatarloaded", doneLoad);
 			this.setState({ CWASALoaded: true });
 		}
 	}
@@ -632,8 +673,10 @@ class Video extends Component {
 
 	handleBottomBtn = () => {
 		this.changeBodyColor()
-		window.addEventListener('keydown', this.handleKeyDown);
-		window.addEventListener('keyup', this.handleKeyUp);
+		if (this.state.userType === 0) {
+			window.addEventListener('keydown', this.handleKeyDown);
+			window.addEventListener('keyup', this.handleKeyUp);
+		}
 	}
 
 	handleSignWordChange = (data) => {
@@ -644,7 +687,15 @@ class Video extends Component {
 			this.signWordArr += '/';
 			this.signWordArr = this.signWordArr + this.state.signWord;
 		}
-		console.log(this.signWordArr);
+		const sendBtn = document.querySelector("#send-sign-sentence-btn");
+		if (sendBtn) {
+			sendBtn.innerHTML = "Send " + this.signWordArr
+			console.log(this.signWordArr)
+		}
+		const signWordText = document.querySelector("#sign-word-text");
+		if (signWordText) {
+			signWordText.innerHTML = this.signWordArr
+		}
 	}
 	async componentDidMount() {
 		const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
@@ -653,12 +704,24 @@ class Video extends Component {
 
 	handleSendSignSen = async () => {
 		let formData = new FormData();
-        formData.append("text", this.signWordArr);
+		formData.append("text", this.signWordArr);
 		const post = await fetch('https://sharp-pure-goat.ngrok-free.app/sentence', {
-            method: 'POST',
-            body: formData,
-        })
+			method: 'POST',
+			body: formData,
+		})
 		const response = await post.json();
+
+		const signWordText = document.querySelector("#sign-word-text");
+		if (signWordText) {
+			signWordText.innerHTML = ''
+		}
+
+		socket.emit('caption-text', 0, response.result)
+
+		// const Caption = document.querySelector("#caption-text");
+		// if (Caption) {
+		// 	Caption.innerHTML = response.result
+		// }
 
 		console.dir("handleSendSignSen: " + response.result);
 	}
@@ -705,9 +768,11 @@ class Video extends Component {
 					:
 					<div>
 						<div className="bottom-btn" onLoad={this.handleBottomBtn()}>
-							<IconButton id='bot-btn' className='mic' onClick={this.handleAudio}>
-								{this.state.audio === true ? <MicIcon /> : <MicOffIcon />}
-							</IconButton>
+							{this.state.userType === 0 ?
+								<IconButton id='bot-btn' className='mic' onClick={this.handleAudio}>
+									{this.state.audio === true ? <MicIcon /> : <MicOffIcon />}
+								</IconButton>
+								: <div>{this.setState()}</div>}
 
 							<IconButton id='bot-btn' className='video-cam' onClick={this.handleVideo}>
 								{(this.state.video === true) ? <VideocamIcon /> : <VideocamOffIcon />}
@@ -757,23 +822,45 @@ class Video extends Component {
 							</div>
 
 							<Row id="main" className="video-container">
-								<div id='user'>
-									<UserVideo onDataReceived={this.handleSignWordChange} ></UserVideo>
-									{/* <h1 style={{color: "white", background: "red"}}>{this.state.signWord}</h1> */}
-									{/* <video id="user-video" ref={this.localVideoref} autoPlay muted></video> */}
-									{/* <a className='user-name'>{this.state.username}</a> */}
-								</div>
+								{this.state.userType === 1 ?
+									<div id='user'>
+										<UserVideo onDataReceived={this.handleSignWordChange} onSendSignWord={this.handleSendSignSen} />
+										<div id='sign-word-text' style={{
+											background: "white", position: "absolute", bottom: "0.8em",
+											width: "calc(100% - 20px)", borderRadius: "10px",
+											zIndex: "10", left: "10px"
+										}}></div>
+										<video id="user-video" style={{ position: "absolute", opacity: "0%" }} ref={this.localVideoref} autoPlay muted></video>
+										{/* <a className='user-name'>{this.state.username}</a> */}
+									</div>
+									:
+									<div id='user'>
+
+										<video id="user-video" ref={this.localVideoref} autoPlay muted></video>
+										{/* <a className='user-name'>{this.state.username}</a> */}
+									</div>
+								}
 							</Row>
 
-							<button style={{position:"absolute",top:"300px", left:"50px", height:"100px", background:"white", color:"black"}} onClick={this.handleSendSignSen}>Send {this.signWordArr} sentence</button>
+							{/* {this.state.userType === 1 ? <button id='send-sign-sentence-btn' style={{
+								position: "absolute", top: "300px", left: "50px",
+								height: "100px", background: "white", color: "black"
+							}}
+								onClick={this.handleSendSignSen}></button> : null} */}
+
+
 
 							<Draggable>
-								<div id="canvas-wrapper">
-									<button id="close-canvas">X</button>
-									<div id="canvas" onLoad={this.HandleCWASALoad()} class="CWASAAvatar av0"></div>
-								</div>
-								{/* <div id="caption-canvas"><a id="caption-text">{this.handleCaption}Phụ đề sẽ trông như thế này</a><button id="close-caption">X</button></div> */}
+								<div id="caption-canvas"><a id="caption-text">Phụ đề sẽ trông như thế này</a><button id="close-caption">X</button></div>
 							</Draggable>
+							{this.state.userType === 1 ?
+								<Draggable>
+									<div id="canvas-wrapper">
+										<button id="close-canvas">X</button>
+										<div id="canvas" onLoad={this.HandleCWASALoad()} class="CWASAAvatar av0"></div>
+									</div>
+								</Draggable>
+								: null}
 						</div>
 					</div>
 				}
