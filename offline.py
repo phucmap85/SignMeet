@@ -117,7 +117,11 @@ def sentence_completion():
       ]
     )
     
-    return jsonify({'result': tone_normalization(text_normalize(completion.choices[0].message.content))})
+    response = tone_normalization(text_normalize(completion.choices[0].message.content))
+    
+    response = response.replace("\"", "").strip()
+
+    return jsonify({'result': response})
   except:
     return jsonify({'result': 'None'})
 
