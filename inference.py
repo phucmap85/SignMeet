@@ -3,6 +3,7 @@ import mediapipe as mp
 import numpy as np
 import time
 import os
+import math
 import tensorflow as tf
 
 model = tf.keras.models.load_model("RegVNSL.h5")
@@ -70,8 +71,14 @@ def detect(lm_list):
     else:
         return "None"
 
+def hamming_dist(x, y, u, v):
+    return math.sqrt((x - u) ** 2 + (y - v) ** 2)
+
 with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     t0, on_countdown, on_lip, on_passed, pre_num_of_frames, pre_predict = time.time(), False, 0, False, 0, "None"
+
+    t0_hand, on_countdown_hand, on_enter, on_passed_hand, = time.time(), False, 0, False
+
     lm_arr = []
 
     while cap.isOpened():
@@ -133,6 +140,32 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
 
         cv2.circle(image, landmark_to_pixel(rh[12][0], rh[12][1], image.shape[1], image.shape[0]), 8, (255, 255, 255), 15)
         cv2.circle(image, landmark_to_pixel(lh[12][0], lh[12][1], image.shape[1], image.shape[0]), 8, (255, 255, 255), 15)
+
+        cv2.circle(image, (50, 400), 15, (0, 128, 255), 30)
+
+        # On_enter
+        new_x_hand, new_y_hand = landmark_to_pixel(rh[12][0], rh[12][1], image.shape[1], image.shape[0])
+        print(hamming_dist(new_x_hand, new_y_hand, 50, 400))
+
+        if(hamming_dist(new_x_hand, new_y_hand, 50, 400) <= 20):
+            # cv2.putText(image, 'YES', (1200, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 3, cv2.LINE_AA)
+            
+            cv2.putText(image, str(max(0, round(0.5 - time.time() + t0_hand, 2))), (800, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 3, cv2.LINE_AA)
+
+            if not on_countdown_hand:
+                t0_hand = time.time()
+                on_countdown_hand = True
+            
+            if(0.5 - time.time() + t0_hand <= 0 and not on_passed_hand):
+                on_passed_hand = True
+                on_enter = 1 - on_enter
+        else:
+            on_passed_hand = False
+            on_countdown_hand = False
+        
+        if on_enter:
+            cv2.putText(image, 'OK', (800, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 3, cv2.LINE_AA)
+            on_enter = 0
 
         # Show to screen
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
