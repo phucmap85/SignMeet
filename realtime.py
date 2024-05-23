@@ -289,9 +289,7 @@ class ServerProcessor:
         async for message in self.connection:
             print(message[:10])
             print(len(message))
-            if(len(message) < 10):
-                break
-            if not message:
+            if not message or len(message) < 10:
                 break
             sf = soundfile.SoundFile(io.BytesIO(message),channels=1,endian='LITTLE',samplerate=SAMPLING_RATE,subtype="PCM_16",format="RAW")
             audio, _ = librosa.load(sf,sr=SAMPLING_RATE,dtype=np.float32)
