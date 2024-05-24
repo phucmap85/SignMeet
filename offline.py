@@ -71,7 +71,7 @@ for folder in classes:
   class_path = data_path + '/' + folder
   for file in os.listdir(class_path):
     timestep = max(timestep, len(np.load(class_path + '/' + file)))
-
+print('max_timestep_size:', timestep)
 
 # Load sign prediction model
 reg_vnsl = load_model('RegVNSL.h5')
@@ -126,6 +126,31 @@ def sentence_completion():
     return jsonify({'result': 'None'})
 
 
+def landmarks_normalization(landmarks):
+  lm_list = []
+
+  base_x, base_y, base_z = landmarks[0][0], landmarks[0][1], landmarks[0][2]
+
+  center_x = np.mean([lm[0] for lm in landmarks])
+  center_y = np.mean([lm[1] for lm in landmarks])
+  center_z = np.mean([lm[2] for lm in landmarks])
+
+  distances = [np.sqrt((lm[0] - center_x)**2 + (lm[1] - center_y)**2 + (lm[2] - center_z)**2) for lm in landmarks[1:]]
+
+  scale_factors = [1.0 / dist if dist != 0 else 0.0 for dist in distances]
+
+  lm_list.append(0.0)
+  lm_list.append(0.0)
+  lm_list.append(0.0)
+
+  for lm, scale_factor in zip(landmarks[1:], scale_factors):
+    lm_list.append((lm[0] - base_x) * scale_factor)
+    lm_list.append((lm[1] - base_y) * scale_factor)
+    lm_list.append((lm[2] - base_z) * scale_factor)
+
+  return np.asarray(lm_list)
+
+
 # Sign Prediction
 @app.route("/word", methods=['POST'])
 @cross_origin()
@@ -137,22 +162,34 @@ def word_predict():
     # Convert to NumPy array and reshape
     lm_list = np.fromstring(recv_arr, sep=',')
     lm_list = np.reshape(lm_list, (-1, 144))
+    print(lm_list.shape)
 
     # Add missing timestep
     while(lm_list.shape[0] < timestep):
       lm_list = np.append(lm_list, np.zeros((1, lm_list.shape[1])), axis=0)
     
-    print(lm_list.shape)
+    # Landmarks normalization
+    n_lm_list = []
+    
+    for lm in lm_list:
+      pose = np.asarray(lm[:18]).reshape((-1, 3))
+      lh = np.asarray(lm[18:81]).reshape((-1, 3))
+      rh = np.asarray(lm[81:]).reshape((-1, 3))
 
+      n_lm_list.append(np.concatenate([landmarks_normalization(pose), landmarks_normalization(lh), landmarks_normalization(rh)]))
+    
     # Reshape
-    lm_list = lm_list.reshape((-1, lm_list.shape[0], lm_list.shape[1]))
+    n_lm_list = np.asarray(n_lm_list)
+    n_lm_list = n_lm_list.reshape((-1, n_lm_list.shape[0], n_lm_list.shape[1]))
+    
+    print(n_lm_list.shape)
     
     # Predict
-    results = reg_vnsl.predict(lm_list)
+    results = reg_vnsl.predict(n_lm_list)
     index = np.argmax(results)
 
     # Return result
-    if(results[0][index] > 0.7):
+    if(results[0][index] > 0.8):
       return jsonify({'result': classes[index]})
     else:
       return jsonify({'result': 'None'})
