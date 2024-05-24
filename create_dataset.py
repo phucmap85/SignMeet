@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 import os
 
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -37,6 +37,30 @@ def draw_landmark_on_image(image, results):
                                 mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4),
                                 mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2)
                                 )
+
+def landmarks_normalization(landmarks):
+    lm_list = []
+    
+    base_x, base_y, base_z = landmarks[0][0], landmarks[0][1], landmarks[0][2]
+    
+    center_x = np.mean([lm[0] for lm in landmarks])
+    center_y = np.mean([lm[1] for lm in landmarks])
+    center_z = np.mean([lm[2] for lm in landmarks])
+    
+    distances = [np.sqrt((lm[0] - center_x)**2 + (lm[1] - center_y)**2 + (lm[2] - center_z)**2) for lm in landmarks[1:]]
+
+    scale_factors = [1.0 / dist if dist != 0 else 0.0 for dist in distances]
+
+    lm_list.append(0.0)
+    lm_list.append(0.0)
+    lm_list.append(0.0)
+
+    for lm, scale_factor in zip(landmarks[1:], scale_factors):
+        lm_list.append((lm[0] - base_x) * scale_factor)
+        lm_list.append((lm[1] - base_y) * scale_factor)
+        lm_list.append((lm[2] - base_z) * scale_factor)
+    
+    return np.asarray(lm_list)
 
 def make_landmark_timestep(results):
     face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]) if results.face_landmarks else np.zeros((468, 3))
@@ -117,7 +141,9 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
         
         if on_lip:
             if not on_countdown:
-                lm_arr.append(np.concatenate([pose.flatten(), lh.flatten(), rh.flatten()]))
+                lm_arr.append(np.concatenate([landmarks_normalization(pose), 
+                                              landmarks_normalization(lh), 
+                                              landmarks_normalization(rh)]))
         else:
             if(len(lm_arr) > 0):
                 data_path = path + '/' + str(datetime.now().strftime("%d-%m-%Y_%H.%M.%S.%f"))
