@@ -162,3 +162,4 @@ models
 db
 node_modules/
 .expo
+data/
