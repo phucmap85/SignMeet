@@ -9,10 +9,10 @@ SignMeet
   </a>
 </p>
 
-<p align="center">
-Vietnamese to Vietnamese Sign Language translation system through 3D animation for the deaf</br>
-</br>
-<img src="https://github.com/PL508/Vi2VSL/assets/58034112/127a0dfb-029b-4993-ba9e-50c94e7487c5"/>
+<!-- <p align="center">
+An assistive communication system for the deaf</br> -->
+<!-- </br>
+<img src="https://github.com/PL508/Vi2VSL/assets/58034112/127a0dfb-029b-4993-ba9e-50c94e7487c5"/> -->
 
 </p>
 
