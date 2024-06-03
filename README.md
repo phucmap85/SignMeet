@@ -4,7 +4,7 @@ SignMeet
 
 <p align="center">
   <img src="https://img.shields.io/badge/stable-2.0-blue" />
-	<a href="https://github.com/PL508/SignMeet/blob/master/LICENSE">
+	<a href="https://github.com/PL508/SignMeet/blob/server_v2/LICENSE">
       <img src="https://img.shields.io/github/license/lqphuc123/Quidk"/>
   </a>
 </p>
