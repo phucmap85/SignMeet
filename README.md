@@ -1,5 +1,5 @@
-<h1 align="center">
-SignMeet
+<h1 align="left">
+SignMeet: An assistive communication system for the deaf
 </h1>
 
 <p align="center">
@@ -10,11 +10,8 @@ SignMeet
 </p>
 
 <!-- <p align="center">
-An assistive communication system for the deaf</br> -->
-<!-- </br>
-<img src="https://github.com/PL508/Vi2VSL/assets/58034112/127a0dfb-029b-4993-ba9e-50c94e7487c5"/> -->
-
-</p>
+<img src="https://github.com/PL508/Vi2VSL/assets/58034112/127a0dfb-029b-4993-ba9e-50c94e7487c5"/>
+</p> -->
 
 ## Installation
 
