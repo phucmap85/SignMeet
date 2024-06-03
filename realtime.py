@@ -10,7 +10,6 @@ from faster_whisper import WhisperModel
 from underthesea import text_normalize, word_tokenize
 
 import xml.etree.ElementTree as ET
-import xml.dom.minidom
 
 SAMPLING_RATE = 16000
 PACKET_SIZE = 65536
@@ -204,11 +203,7 @@ def sentence_to_sigml(sentence):
         for letter in list_of_word[word].split(','):
             ET.SubElement(itemManual, letter)
 
-    dataStr = ET.tostring(main, encoding='unicode')
-    dom = xml.dom.minidom.parseString(dataStr)
-    aux = dom.toprettyxml(encoding='UTF-8').decode("utf-8")
-
-    return aux
+    return ET.tostring(main, encoding='unicode')
 
 
 def realtime_preprocess_transcript(text):
