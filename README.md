@@ -1,5 +1,5 @@
 <h1 align="left">
-SignMeet: An assistive communication system for the deaf
+SignMeet: Assistive communication system for the deaf
 </h1>
 
 <p align="center">
