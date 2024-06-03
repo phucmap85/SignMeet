@@ -16,27 +16,23 @@ mp_holistic = mp.solutions.holistic
 def draw_landmark_on_image(image, results):
     # Face landmarks
     # mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.FACEMESH_CONTOURS, 
-    #                             mp_drawing.DrawingSpec(color=(80,110,10), thickness=1, circle_radius=1),
-    #                             mp_drawing.DrawingSpec(color=(80,256,121), thickness=1, circle_radius=1)
-    #                             )
+    #                           mp_drawing.DrawingSpec(color=(80,110,10), thickness=1, circle_radius=1),
+    #                           mp_drawing.DrawingSpec(color=(80,256,121), thickness=1, circle_radius=1))
     
     # Right hand
     mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
-                                mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4),
-                                mp_drawing.DrawingSpec(color=(80,44,121), thickness=2, circle_radius=2)
-                                )
+                              mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4),
+                              mp_drawing.DrawingSpec(color=(80,44,121), thickness=2, circle_radius=2))
 
     # Left Hand
     mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
-                                mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4),
-                                mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2)
-                                )
+                              mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4),
+                              mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2))
 
     # Pose Detections
     mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS, 
-                                mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4),
-                                mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2)
-                                )
+                              mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4),
+                              mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2))
 
 def landmarks_normalization(landmarks):
     lm_list = []
@@ -63,14 +59,14 @@ def landmarks_normalization(landmarks):
     return np.asarray(lm_list)
 
 def make_landmark_timestep(results):
-    face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]) if results.face_landmarks else np.zeros((468, 3))
+    face = np.asarray([[res.x, res.y, res.z, res.visibility] for res in results.face_landmarks.landmark]) if results.face_landmarks else np.zeros((468, 4))
     
-    pose = np.array([[res.x, res.y, res.z] for res in results.pose_landmarks.landmark]) if results.pose_landmarks else np.zeros((33, 3))
+    pose = np.asarray([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]) if results.pose_landmarks else np.zeros((33, 4))
     pose = np.delete(pose, [i for i in range(11)] + [i for i in range(17, len(pose))], 0)
     
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]) if results.left_hand_landmarks else np.zeros((21, 3))
+    lh = np.asarray([[res.x, res.y, res.z, res.visibility] for res in results.left_hand_landmarks.landmark]) if results.left_hand_landmarks else np.zeros((21, 4))
     
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]) if results.right_hand_landmarks else np.zeros((21, 3))
+    rh = np.asarray([[res.x, res.y, res.z, res.visibility] for res in results.right_hand_landmarks.landmark]) if results.right_hand_landmarks else np.zeros((21, 4))
     
     return face, pose, lh, rh
 
