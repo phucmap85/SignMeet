@@ -94,7 +94,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
     
     lm_arr = []
     
-    ans = ""
+    ans, pre_num_of_frames = "", 0
     
     while cap.isOpened():
         ret, frame = cap.read()
@@ -138,11 +138,14 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
                                           landmarks_normalization(rh)]))
         else:
             if(len(lm_arr) > 0):
+                pre_num_of_frames = len(lm_arr)
                 ans = detect(lm_arr)
                 lm_arr.clear()
         
         cv2.putText(image, "YES" if keep_state else "NO", (0, 40), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3, cv2.LINE_AA)
+        cv2.putText(image, str(f'NUM OF FRAMES: {pre_num_of_frames}'), (950, 700), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3, cv2.LINE_AA)
         
         cv2.putText(image, ans, (0, 700), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 255), 3, cv2.LINE_AA)
         
