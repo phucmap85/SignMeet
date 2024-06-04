@@ -1,0 +1,14 @@
+{
+	"version": "v0.15.2",
+	"key": "0edc0f987c436e135ae73594c742a62af1016270fb08a17fe90886ac6c13842c",
+	"hostname": "twilight-wave-85883.pktriot.net",
+	"serverKey": "d1460a0db88a19375254b3eef0e27a68d84813d286c8a4398f8aab19ef4fa927",
+	"serverHost": "asia-southeast-48343.packetriot.net",
+	"ports": [
+		{
+			"port": 22760,
+			"destination": "",
+			"dstPort": 0
+		}
+	]
+}
