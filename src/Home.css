@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+html, body {
+	height: 100%;
+}
+
+body {
+	margin: 0;
+	text-align: center;
+	background-color: whitesmoke;
+}
+
+.container2 {
+	height: 100vh;
+	width: 100vw;
+	display: flex;
+	padding-top: 30px;
+	margin: auto;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+}
+
+.container2 .description {
+	padding: 20px;
+	height: 100%;
+	width: 50vw;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap:1em;
+}
+
+.container2 .description svg {
+	height: 400px;
+	width: 400px;
+}
+
+.container2 .join-box-wrapper {
+	height: 100%;
+	width: 50vw;
+	padding: 100px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.container2 .join-box-wrapper .join-box {
+	margin-top: 20px;
+	font-family: "Inter", sans-serif;
+	background: whitesmoke;
+	padding: 30px;
+	border-radius: 5%;
+}
+
+.container2 .join-box-wrapper .title {
+	font-size: 2.5em;
+	font-family: "Montserrat", sans-serif;
+}
+
+.container2 .join-box-wrapper .info{
+	font-family: "Raleway", sans-serif;
+	font-size: 1.5em;
+	font-weight: 400;
+	font-style: italic;
+}
+
+.join-box p {
+	font-size: 1.3em;
+	font-weight: bold;
+}
+
+.join-box .interactive-content{
+	display: flex;
+	align-items: end;
+	gap: 1em;
+}
