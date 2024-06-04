@@ -1,52 +1,70 @@
-<h1 align="left">
-SignMeet: Assistive communication system for the deaf
-</h1>
+# Getting Started with Create React App
 
-<p align="center">
-  <img src="https://img.shields.io/badge/stable-2.0-blue" />
-	<a href="https://github.com/PL508/SignMeet/blob/server_v2/LICENSE">
-      <img src="https://img.shields.io/github/license/lqphuc123/Quidk"/>
-  </a>
-</p>
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-<!-- <p align="center">
-<img src="https://github.com/PL508/Vi2VSL/assets/58034112/127a0dfb-029b-4993-ba9e-50c94e7487c5"/>
-</p> -->
+## Available Scripts
 
-## Installation
+In the project directory, you can run:
 
-### Install Environment
+### `npm start`
 
-You will need [Python 3.10 or later](https://www.python.org/downloads/). Also, we highly recommend installing a [Miniconda](https://docs.anaconda.com/free/miniconda/index.html) environment to get a high-quality BLAS library (MKL).
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-### Install Dependencies
+The page will reload when you make changes.\
+You may also see any lint errors in the console.
 
-All the libraries and third-party services need for SignMeet are in [setup.sh](setup.sh).</br>
+### `npm test`
 
-Use `sudo ./setup.sh` to install.
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### Setup for discrete GPU (optional)
+### `npm run build`
 
-If you want to run with **NVIDIA GPU** support, install:
-- [NVIDIA CUDA](https://developer.nvidia.com/cuda-downloads) 12.2 or above.
-- [NVIDIA cuDNN](https://developer.nvidia.com/cudnn) 8.9 or above.
-- [Compiler](https://gist.github.com/ax3l/9489132) compatible with CUDA.
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
 
-**_Note:_** You could refer to the [cuDNN Support Matrix](https://docs.nvidia.com/deeplearning/cudnn/pdf/cuDNN-Support-Matrix.pdf) for cuDNN versions with the various supported CUDA, CUDA driver and NVIDIA hardwares.
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
 
-**_We are currently not supported for AMD GPU._**
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-## Credits
-[Le Quang Phuc](https://www.facebook.com/phuc.lequang.9081/)</br>
-[Huynh Tan Phuc](https://www.facebook.com/HtPuc)
+### `npm run eject`
 
-## Feedback and contributions
+**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-Please let us know if you encounter a bug by [filing an issue](https://github.com/PL508/SignMeet/issues).
+If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-We appreciate all contributions. If you are planning to contribute back bug-fixes, please do so without any further discussion.
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
-If you plan to contribute new features, utility functions, or extensions to the core, please first open an issue and discuss the feature with us.
+You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
 
-## License
-SignMeet has a MIT license, as found in the [LICENSE](LICENSE) file.
+## Learn More
+
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+To learn React, check out the [React documentation](https://reactjs.org/).
+
+### Code Splitting
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+
+### Analyzing the Bundle Size
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+
+### Making a Progressive Web App
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+
+### Advanced Configuration
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+
+### Deployment
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+
+### `npm run build` fails to minify
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
