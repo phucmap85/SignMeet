@@ -169,8 +169,8 @@ class Video extends Component {
 
 	handleWSServer = (stream) => {
 		if (this.state.userType === 0) {
-			this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
-			// this.webSocket = new WebSocket("ws://localhost:8080");
+			// this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
+			this.webSocket = new WebSocket("ws://localhost:8080");
 
 			this.webSocket.addEventListener("message", (data) => {
 				console.dir(data.data);

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, Component, createRef } from 'react';
+import React, { Component, createRef } from 'react';
 import { Holistic } from '@mediapipe/holistic';
 import * as hlt from '@mediapipe/holistic';
 import * as cam from '@mediapipe/camera_utils';
