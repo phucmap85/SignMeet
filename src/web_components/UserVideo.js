@@ -32,6 +32,7 @@ class UserVideo extends Component {
         this.webcamRef = createRef();
         this.canvasRef = createRef();
         this.camera = null;
+        
         this.t0 = getTime();
         this.on_countdown = 0;
         this.on_lip = 0;
@@ -43,6 +44,13 @@ class UserVideo extends Component {
         this.on_enter = 0;
         this.on_passed_hand = 0;
 
+        this.p_landmarks = [];
+        this.n_frames = 0;
+        this.p_frames = 0;
+        this.threshold = 0;
+        this.keep_state = 0;
+        this.false_cnt = 0;
+
         lm_arr = [];
     }
 
@@ -53,35 +61,37 @@ class UserVideo extends Component {
         if (results.poseLandmarks) {
             let count = 0;
             results.poseLandmarks.forEach(val => {
-                if (count > 10 && count < 17) pose.push([val.x, val.y, val.z]);
+                if (count > 10 && count < 17) {
+                    pose.push([val.x, val.y, val.z, val.visibility ? val.visibility : 0]);
+                }
                 count++;
             });
         } else {
-            for (let i = 0; i < 6; i++) pose.push([0, 0, 0]);
+            for (let i = 0; i < 6; i++) pose.push([0, 0, 0, 0]);
         }
 
         if (results.faceLandmarks) {
             results.faceLandmarks.forEach(val => {
-                face.push([val.x, val.y, val.z]);
+                face.push([val.x, val.y, val.z, val.visibility ? val.visibility : 0]);
             });
         } else {
-            for (let i = 0; i < 468; i++) face.push([0, 0, 0]);
+            for (let i = 0; i < 468; i++) face.push([0, 0, 0, 0]);
         }
 
         if (results.leftHandLandmarks) {
             results.leftHandLandmarks.forEach(val => {
-                lh.push([val.x, val.y, val.z]);
+                lh.push([val.x, val.y, val.z, val.visibility ? val.visibility : 0]);
             });
         } else {
-            for (let i = 0; i < 21; i++) lh.push([0, 0, 0]);
+            for (let i = 0; i < 21; i++) lh.push([0, 0, 0, 0]);
         }
 
         if (results.rightHandLandmarks) {
             results.rightHandLandmarks.forEach(val => {
-                rh.push([val.x, val.y, val.z]);
+                rh.push([val.x, val.y, val.z, val.visibility ? val.visibility : 0]);
             });
         } else {
-            for (let i = 0; i < 21; i++) rh.push([0, 0, 0]);
+            for (let i = 0; i < 21; i++) rh.push([0, 0, 0, 0]);
         }
 
         return { face, pose, lh, rh };
@@ -108,16 +118,15 @@ class UserVideo extends Component {
         const videoHeight = this.webcamRef.current.video.videoHeight;
 
         let timeStep = this.makeLandmarkTimestep(results);
+        this.n_frames += 1;
 
         const face = timeStep.face, pose = timeStep.pose;
         const lh = timeStep.lh, rh = timeStep.rh;
 
+        // Check if right hand on lip
         let lip_x_min = face[61][0], lip_x_max = face[409][0];
         let lip_y_min = Math.min(face[37][1], face[267][1]), lip_y_max = face[17][1]
 
-        // console.log(getTime() - this.t0, this.on_lip);
-
-        // Check if right hand on lip
         if (rh[12][0] > 0 && rh[12][1] > 0 && rh[12][0] >= lip_x_min && rh[12][0] <= lip_x_max
             && rh[12][1] >= lip_y_min && rh[12][1] <= lip_y_max) {
 
@@ -138,6 +147,9 @@ class UserVideo extends Component {
         if (this.on_lip) {
             if (!this.on_countdown) {
                 let temp_pose = pose.flat(), temp_lh = lh.flat(), temp_rh = rh.flat();
+                console.log(temp_pose.length)
+                console.log(temp_lh.length)
+                console.log(temp_rh.length)
                 lm_arr.push(temp_pose.concat(temp_lh, temp_rh));
             }
         } else {
@@ -151,11 +163,58 @@ class UserVideo extends Component {
             }
         }
 
+        /* Movement detection
+        if(this.n_frames - this.p_frames > 2) {
+            if(this.p_landmarks.length > 0) {
+                let temp = 0;
+                for(let i = 0; i < pose.length; i++) {
+                    if(pose[i][3] > 0.3) {
+                        temp += hamming_dist(pose[i][0], pose[i][1], this.p_landmarks[i][0], this.p_landmarks[i][1]);
+                    }
+                }
+                this.threshold = temp > 0.1;
+            }
+            
+            (this.p_landmarks = []).length = 0;
+
+            for(let i = 0; i < pose.length; i++) {
+                this.p_landmarks.push([pose[i][0], pose[i][1]]);
+            }
+
+            this.p_frames = this.n_frames;
+        }
+
+        if(this.threshold) this.keep_state = true;
+        else {
+            if(this.keep_state) {
+                this.false_cnt += 1;
+                if(this.false_cnt > 6) {
+                    this.keep_state = false;
+                    this.false_cnt = 0;
+                }
+            }
+        }
+
+        console.log(this.keep_state);
+
+        if (this.keep_state) {
+            let temp_pose = pose.flat(), temp_lh = lh.flat(), temp_rh = rh.flat();
+            lm_arr.push(temp_pose.concat(temp_lh, temp_rh));
+        } else {
+            if (lm_arr.length > 0) {
+                this.pre_num_of_frames = lm_arr.length;
+                console.log(this.pre_num_of_frames, lm_arr);
+
+                this.sendHTTPReq(lm_arr);
+
+                (lm_arr = []).length = 0;
+            }
+        } */
+
         // Check if user click enter
         let new_x_hand = landmark_to_pixel(rh[12][0], rh[12][1]).new_x;
         let new_y_hand = landmark_to_pixel(rh[12][0], rh[12][1]).new_y;
 
-        console.dir(hamming_dist(new_x_hand, new_y_hand, 50, 400));
         if (hamming_dist(new_x_hand, new_y_hand, 50, 400) <= 30) {
             if (!this.on_countdown_hand) {
                 this.t0_hand = getTime();
