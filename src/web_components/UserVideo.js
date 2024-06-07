@@ -108,9 +108,9 @@ class UserVideo extends Component {
         if (response.result !== "None") {
             // this.setState({signWord: response.result});
 
-            this.props.onDataReceived(response.result)
+            console.dir(response);
+            await this.props.onDataReceived(response.result)
         }
-        console.dir(response);
     }
 
     onResults = (results) => {

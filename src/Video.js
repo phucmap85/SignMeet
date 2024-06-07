@@ -77,10 +77,10 @@ class Video extends Component {
 			CWASALoaded: false,
 			isServerReady: false,
 			isSpacePressed: false,
-			signWord: '',
 			CWASALoaded: false,
 		}
 		connections = {}
+		this.signWord = ''
 		this.webSocket = null
 		this.audioContext = null
 		this.camera = null
@@ -679,12 +679,13 @@ class Video extends Component {
 	}
 
 	handleSignWordChange = (data) => {
-		this.setState({ signWord: data });
-		console.log(this.state.signWord);
-		if (this.signWordArr === '') this.signWordArr = this.signWordArr + this.state.signWord;
+		this.signWord = data;
+		console.log("SW in video.js received as: ", data)
+		console.log(this.signWord);
+		if (this.signWordArr === '') this.signWordArr = this.signWordArr + this.signWord;
 		else {
 			this.signWordArr += '/';
-			this.signWordArr = this.signWordArr + this.state.signWord;
+			this.signWordArr = this.signWordArr + this.signWord;
 		}
 		const sendBtn = document.querySelector("#send-sign-sentence-btn");
 		if (sendBtn) {
