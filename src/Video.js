@@ -16,15 +16,6 @@ import PanToolIcon from '@material-ui/icons/PanTool';
 import SendIcon from '@material-ui/icons/Send';
 import FileCopyIcon from '@material-ui/icons/FileCopy';
 import { useRef, useEffect, createRef } from 'react';
-import { Holistic } from '@mediapipe/holistic';
-import * as hlt from '@mediapipe/holistic';
-import * as cam from '@mediapipe/camera_utils';
-import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils'
-import * as tf from '@tensorflow/tfjs';
-import Webcam from 'react-webcam';
-import { reshape } from 'mathjs';
-
-
 
 import { message } from 'antd'
 
@@ -724,6 +715,7 @@ class Video extends Component {
 		// }
 
 		console.dir("handleSendSignSen: " + response.result);
+		this.signWordArr = "";
 	}
 
 	render() {
