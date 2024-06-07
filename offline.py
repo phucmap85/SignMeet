@@ -64,7 +64,7 @@ def tone_normalization(text):
 
 
 # Load classes and get max timestep size
-data_path = 'dataset/VNSL'
+data_path = 'dataset/n_VNSL'
 classes = sorted(os.listdir(data_path))
 timestep = 0
 for folder in classes:
@@ -159,9 +159,12 @@ def word_predict():
     # Get array from request
     recv_arr = request.form['arr']
 
+    print(recv_arr)
+
     # Convert to NumPy array and reshape
     lm_list = np.fromstring(recv_arr, sep=',')
-    lm_list = np.reshape(lm_list, (-1, 144))
+    print(lm_list.shape)
+    lm_list = np.reshape(lm_list, (-1, 192))
     print(lm_list.shape)
 
     # Add missing timestep
@@ -172,9 +175,9 @@ def word_predict():
     n_lm_list = []
     
     for lm in lm_list:
-      pose = np.asarray(lm[:18]).reshape((-1, 3))
-      lh = np.asarray(lm[18:81]).reshape((-1, 3))
-      rh = np.asarray(lm[81:]).reshape((-1, 3))
+      pose = np.asarray(lm[:24]).reshape((-1, 4))
+      lh = np.asarray(lm[24:108]).reshape((-1, 4))
+      rh = np.asarray(lm[108:]).reshape((-1, 4))
 
       n_lm_list.append(np.concatenate([landmarks_normalization(pose), landmarks_normalization(lh), landmarks_normalization(rh)]))
     
