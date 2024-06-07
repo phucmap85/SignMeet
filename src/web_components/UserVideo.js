@@ -147,9 +147,6 @@ class UserVideo extends Component {
         if (this.on_lip) {
             if (!this.on_countdown) {
                 let temp_pose = pose.flat(), temp_lh = lh.flat(), temp_rh = rh.flat();
-                console.log(temp_pose.length)
-                console.log(temp_lh.length)
-                console.log(temp_rh.length)
                 lm_arr.push(temp_pose.concat(temp_lh, temp_rh));
             }
         } else {
