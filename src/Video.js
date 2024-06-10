@@ -31,7 +31,7 @@ import ChromeOnly from './web_components/chromeOnly'
 import UserVideo from './web_components/UserVideo'
 import { Height } from '@material-ui/icons'
 
-const server_url = process.env.NODE_ENV === 'production' ? 'https://adoring-sea-27008.pktriot.net' : "http://localhost:4001"
+const server_url = process.env.NODE_ENV === 'production' ? 'adoring-sea-27008.pktriot.net:22619' : "http://localhost:4001"
 
 var connections = {}
 const peerConnectionConfig = {
@@ -160,8 +160,8 @@ class Video extends Component {
 
 	handleWSServer = (stream) => {
 		if (this.state.userType === 0) {
-			// this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
-			this.webSocket = new WebSocket("ws://localhost:8080");
+			this.webSocket = new WebSocket("ws://twilight-wave-85883.pktriot.net:22760");
+			// this.webSocket = new WebSocket("ws://localhost:8080");
 
 			this.webSocket.addEventListener("message", (data) => {
 				console.dir(data.data);
