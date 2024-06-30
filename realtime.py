@@ -15,7 +15,7 @@ SAMPLING_RATE = 16000
 PACKET_SIZE = 65536
 
 device = 0 if torch.cuda.is_available() else -1
-whisper = WhisperModel("PhucMap/phothitham-medium-ct2", device=("cuda" if device == 0 else "cpu"),
+whisper = WhisperModel("PhucMap/phothitham-tiny-ct2", device=("cuda" if device == 0 else "cpu"),
                        compute_type=("float16" if device == 0 else "int8"))
 
 dict_map = {
@@ -230,6 +230,7 @@ def realtime_preprocess_transcript(text):
 ######### Server objects
 
 from websockets.server import serve
+import ssl
 import logging
 
 
@@ -337,8 +338,12 @@ async def handler(websocket):
     await proc.process()
 
 
-async def main():
-    async with serve(handler, "127.0.0.1", 5000):
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ssl_context.load_cert_chain(certfile='cert.pem', keyfile='key.pem')
+
+
+async def main():   
+    async with serve(handler, "127.0.0.1", 5000, ssl=ssl_context):
         await asyncio.Future()
 
 

@@ -163,3 +163,6 @@ db
 node_modules/
 .expo
 data/
+
+key.pem
+cert.pem
