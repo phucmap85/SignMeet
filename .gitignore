@@ -164,5 +164,8 @@ node_modules/
 .expo
 data/
 
+alphabet_data/
+word_data/
+
 key.pem
 cert.pem
