@@ -1,6 +1,7 @@
 transformers[torch]==4.38.2
 sentencepiece==0.2.0
 tensorflow==2.15.1
+scikit-learn==1.4.2
 faster-whisper==1.0.1
 underthesea==6.8.0
 
