@@ -163,3 +163,4 @@ data/
 build
 cert.pem
 key.pem
+.DS_Store

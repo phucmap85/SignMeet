@@ -31,7 +31,7 @@ import ChromeOnly from './web_components/chromeOnly'
 import UserVideo from './web_components/UserVideo'
 import { Height } from '@material-ui/icons'
 
-const server_url = process.env.NODE_ENV === 'production' ? 'affectionate-bird-59138.pktriot.net:22848' : "http://localhost:4001"
+const server_url = process.env.NODE_ENV === 'production' ? 'https://5a1e-14-241-131-46.ngrok-free.app' : "http://localhost:4001"
 
 var connections = {}
 const peerConnectionConfig = {
