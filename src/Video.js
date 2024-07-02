@@ -32,7 +32,7 @@ import UserVideo from './web_components/UserVideo'
 import { Height } from '@material-ui/icons'
 
 // const server_url = process.env.NODE_ENV === 'production' ? 'https://5a1e-14-241-131-46.ngrok-free.app' : "http://localhost:4001"
-const server_url = 'https://5a1e-14-241-131-46.ngrok-free.app';
+const server_url = 'https://affectionate-bird-59138.pktriot.net:22848';
 
 var connections = {}
 const peerConnectionConfig = {

@@ -1,5 +1,5 @@
 const express = require("express");
-const { createServer } = require("http");
+const { createServer } = require("https");
 const { Server } = require("socket.io");
 const fs = require('fs');
 var cors = require('cors')
@@ -8,11 +8,11 @@ const path = require("path")
 var xss = require("xss")
 
 const app = express();
-const httpServer = createServer({
+const httpsServer = createServer({
 	key: fs.readFileSync('./key.pem'),
 	cert: fs.readFileSync('./cert.pem')
 }, app);
-const io = new Server(httpServer, { 
+const io = new Server(httpsServer, { 
     cors: {
         origin: '*',
     }
@@ -166,6 +166,6 @@ io.on('connection', (socket) => {
 	})
 })
 
-httpServer.listen(app.get('port'), () => {
+httpsServer.listen(app.get('port'), () => {
 	console.log("listening on", app.get('port'))
 })
