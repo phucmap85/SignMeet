@@ -441,9 +441,9 @@ class Video extends Component {
 					// Wait for their video stream
 					connections[socketListId].onaddstream = (event) => {
 						// TODO mute button, full screen button
-						var searchVidep = document.querySelector(`[data-socket="${socketListId}"]`)
-						if (searchVidep !== null) { // if i don't do this check it make an empyt square
-							searchVidep.srcObject = event.stream
+						var searchVideo = document.querySelector(`[data-socket="${socketListId}"]`)
+						if (searchVideo !== null) { // if i don't do this check it make an empty square
+							searchVideo.srcObject = event.stream
 						} else {
 							elms = clients.length
 							let main = document.getElementById('main')
