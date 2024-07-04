@@ -32,33 +32,18 @@ import UserVideo from './web_components/UserVideo'
 import { Height } from '@material-ui/icons'
 
 // const server_url = process.env.NODE_ENV === 'production' ? 'https://5a1e-14-241-131-46.ngrok-free.app' : "http://localhost:4001"
-const server_url = 'https://affectionate-bird-59138.pktriot.net:22848';
+const server_url = 'https://twilight-wave-85883.pktriot.net:22760';
 
 var connections = {}
 const peerConnectionConfig = {
 	'iceServers': [
 		{
-		  urls: "stun:stun.relay.metered.ca:80",
+		  urls: "stun:stun.l.google.com:19302",
 		},
 		{
-		  urls: "turn:global.relay.metered.ca:80",
-		  username: "3b9deec7c3f427618c77b149",
-		  credential: "NVsfrhp1S+tsKuTC",
-		},
-		{
-		  urls: "turn:global.relay.metered.ca:80?transport=tcp",
-		  username: "3b9deec7c3f427618c77b149",
-		  credential: "NVsfrhp1S+tsKuTC",
-		},
-		{
-		  urls: "turn:global.relay.metered.ca:443",
-		  username: "3b9deec7c3f427618c77b149",
-		  credential: "NVsfrhp1S+tsKuTC",
-		},
-		{
-		  urls: "turns:global.relay.metered.ca:443?transport=tcp",
-		  username: "3b9deec7c3f427618c77b149",
-		  credential: "NVsfrhp1S+tsKuTC",
+		  urls: "turn:relay1.expressturn.com:3478",
+		  username: "efNGNR39L1IM1M9JQ5",
+		  credential: "fqsuElQ998zDTnGn",
 		},
 	],
 }
