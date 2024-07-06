@@ -15,7 +15,7 @@ SAMPLING_RATE = 16000
 PACKET_SIZE = 65536
 
 device = 0 if torch.cuda.is_available() else -1
-whisper = WhisperModel("PhucMap/phothitham-tiny-ct2", device=("cuda" if device == 0 else "cpu"),
+whisper = WhisperModel("PhucMap/phothitham-medium-ct2", device=("cuda" if device == 0 else "cpu"),
                        compute_type=("float16" if device == 0 else "int8"))
 
 dict_map = {

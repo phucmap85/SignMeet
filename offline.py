@@ -91,7 +91,7 @@ Ví dụ:
 "bạn/là ai/tên/là gì/bạn" -> "bạn là ai? tên bạn là gì?"
 "đi/chơi/tôi" -> "tôi đang đi chơi."
 
-Chỉ in ra một đáp án duy nhất, nếu không thực hiện được trả về "None". Bắt buộc sử dụng tiếng Việt.
+Chỉ in ra một đáp án duy nhất. Bắt buộc sử dụng tiếng Việt.
 Hãy giúp tôi thực hiện với các cụm từ/câu sau: """
 
 
