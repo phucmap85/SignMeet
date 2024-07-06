@@ -6,9 +6,9 @@ import os
 import math
 import tensorflow as tf
 
-model = tf.keras.models.load_model("RegVNSL.h5")
+model = tf.keras.models.load_model("../RegVNSL.h5")
 
-cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -16,7 +16,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 mp_drawing = mp.solutions.drawing_utils
 mp_holistic = mp.solutions.holistic
 
-classes = sorted(os.listdir('dataset/n_VNSL'))
+classes = sorted(os.listdir('../dataset/n_VNSL'))
 
 def draw_landmark_on_image(image, results):  
     # Right hand
