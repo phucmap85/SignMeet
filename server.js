@@ -117,28 +117,14 @@ io.on('connection', (socket) => {
 		}
 
 	})
-	socket.on('sigml', (sigml) => {
+	// socket.on('sigml', (sigml, path) => {
+		
+	// 	console.log("sigml: ", sigml)
 
-		var key
-		var ok = false
-		for (const [k, v] of Object.entries(connections)) {
-			for (let a = 0; a < v.length; ++a) {
-				if (v[a] === socket.id) {
-					key = k
-					ok = true
-				}
-			}
-		}
-
-		if (ok === true) {
-			console.log("sigml: ", sigml)
-
-			for (let a = 0; a < connections[key].length; ++a) {
-				io.to(connections[key][a]).emit("sigml", sigml)
-			}
-		}
-
-	})
+	// 	for(let i = 0; i < connections[path].length; i++){
+    //         io.to(connections[path][i]).emit('sigml', sigml);
+    //     }
+	// })
 
 	socket.on('disconnect', () => {
 		var diffTime = Math.abs(timeOnline[socket.id] - new Date())

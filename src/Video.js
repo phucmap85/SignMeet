@@ -91,7 +91,6 @@ class Video extends Component {
 			CWASALoaded: false,
 			isServerReady: false,
 			isSpacePressed: false,
-			CWASALoaded: false,
 		}
 		connections = {}
 		this.signWord = ''
@@ -191,7 +190,7 @@ class Video extends Component {
 				const response = JSON.parse(data.data);
 				this.sigml = response.sigml;
 				this.sigmlText = response.text;
-				socket.emit("sigml", response.sigml);
+				// socket.emit("sigml", response.sigml);
 				socket.emit("caption-text", 1, response.text);
 			});
 
@@ -439,16 +438,16 @@ class Video extends Component {
 				}
 			})
 
-			socket.on('sigml', (sigml) => {
-				console.dir("sigml data: ", sigml);
-				if (this.state.userType === 1) {
-					console.log(this.state.CWASALoaded)
-					// if (this.state.CWASALoaded) {
-					window.CWASA.playSiGMLText(sigml, 0);
-					// }
+			// socket.on('sigml', (sigml) => {
+			// 	console.dir("sigml data: ", sigml);
+			// 	if (this.state.userType === 1) {
+			// 		console.log(this.state.CWASALoaded)
+			// 		// if (this.state.CWASALoaded) {
+			// 		window.CWASA.playSiGMLText(sigml, 0);
+			// 		// }
 
-				}
-			});
+			// 	}
+			// });
 
 			socket.on('user-joined', (id, clients) => {
 				clients.forEach((socketListId) => {
@@ -647,27 +646,27 @@ class Video extends Component {
 		}
 	}
 
-	HandleCWASALoad = () => {
-		if (this.state.CWASALoaded === false) {
-			console.log("CWASALoaded")
-			//Set video start state
-			window.CWASA.init({
-				useClientConfig: true,
-				avSettings: { initSpeed: +1.4 }
-			});
+	// HandleCWASALoad = () => {
+	// 	if (this.state.CWASALoaded === false) {
+	// 		console.log("CWASALoaded")
+	// 		//Set video start state
+	// 		window.CWASA.init({
+	// 			useClientConfig: true,
+	// 			avSettings: { initSpeed: +1.4 }
+	// 		});
 
-			//Loading hanlder
+	// 		//Loading hanlder
 
-			const doneLoad = () => {
-				if (this.state.CWASALoaded === false) {
-					this.setState({ CWASALoaded: true })
-				}
-			}
+	// 		const doneLoad = () => {
+	// 			if (this.state.CWASALoaded === false) {
+	// 				this.setState({ CWASALoaded: true })
+	// 			}
+	// 		}
 
-			window.CWASA.addHook("avatarloaded", doneLoad);
-			this.setState({ CWASALoaded: true });
-		}
-	}
+	// 		window.CWASA.addHook("avatarloaded", doneLoad);
+	// 		this.setState({ CWASALoaded: true });
+	// 	}
+	// }
 
 	handleKeyDown = (e) => {
 		if (this.state.isSpacePressed === false && e.code == "Space") {
@@ -868,14 +867,14 @@ class Video extends Component {
 							<Draggable>
 								<div id="caption-canvas"><a id="caption-text">Phụ đề sẽ trông như thế này</a><button id="close-caption">X</button></div>
 							</Draggable>
-							{this.state.userType === 1 ?
+							{/* {this.state.userType === 1 ?
 								<Draggable>
 									<div id="canvas-wrapper">
 										<button id="close-canvas">X</button>
 										<div id="canvas" onLoad={this.HandleCWASALoad()} class="CWASAAvatar av0"></div>
 									</div>
 								</Draggable>
-								: null}
+								: null} */}
 						</div>
 					</div>
 				}
