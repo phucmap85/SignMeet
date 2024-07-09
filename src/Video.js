@@ -38,27 +38,12 @@ var connections = {}
 const peerConnectionConfig = {
 	'iceServers': [
 		{
-		  urls: "stun:stun.relay.metered.ca:80",
+		  urls: "stun:stun.l.google.com:19302",
 		},
 		{
-		  urls: "turn:global.relay.metered.ca:80",
-		  username: "3b9deec7c3f427618c77b149",
-		  credential: "NVsfrhp1S+tsKuTC",
-		},
-		{
-		  urls: "turn:global.relay.metered.ca:80?transport=tcp",
-		  username: "3b9deec7c3f427618c77b149",
-		  credential: "NVsfrhp1S+tsKuTC",
-		},
-		{
-		  urls: "turn:global.relay.metered.ca:443",
-		  username: "3b9deec7c3f427618c77b149",
-		  credential: "NVsfrhp1S+tsKuTC",
-		},
-		{
-		  urls: "turns:global.relay.metered.ca:443?transport=tcp",
-		  username: "3b9deec7c3f427618c77b149",
-		  credential: "NVsfrhp1S+tsKuTC",
+		  urls: "turn:relay1.expressturn.com:3478",
+		  username: "efNGNR39L1IM1M9JQ5",
+		  credential: "fqsuElQ998zDTnGn",
 		},
 	],
 }
