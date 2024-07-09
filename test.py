@@ -1,117 +1,222 @@
-import cv2
-import mediapipe as mp
-import numpy as np
-import time
-import os
-import joblib
+import json
+import re
 
-model = joblib.load("AlphabetRegVNSL.joblib")
+from underthesea import text_normalize, word_tokenize
 
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+import xml.etree.ElementTree as ET
 
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-mp_drawing = mp.solutions.drawing_utils
-mp_holistic = mp.solutions.holistic
+dict_map = {
+    "òa": "oà",
+    "Òa": "Oà",
+    "ÒA": "OÀ",
+    "óa": "oá",
+    "Óa": "Oá",
+    "ÓA": "OÁ",
+    "ỏa": "oả",
+    "Ỏa": "Oả",
+    "ỎA": "OẢ",
+    "õa": "oã",
+    "Õa": "Oã",
+    "ÕA": "OÃ",
+    "ọa": "oạ",
+    "Ọa": "Oạ",
+    "ỌA": "OẠ",
+    "òe": "oè",
+    "Òe": "Oè",
+    "ÒE": "OÈ",
+    "óe": "oé",
+    "Óe": "Oé",
+    "ÓE": "OÉ",
+    "ỏe": "oẻ",
+    "Ỏe": "Oẻ",
+    "ỎE": "OẺ",
+    "õe": "oẽ",
+    "Õe": "Oẽ",
+    "ÕE": "OẼ",
+    "ọe": "oẹ",
+    "Ọe": "Oẹ",
+    "ỌE": "OẸ",
+    "ùy": "uỳ",
+    "Ùy": "Uỳ",
+    "ÙY": "UỲ",
+    "úy": "uý",
+    "Úy": "Uý",
+    "ÚY": "UÝ",
+    "ủy": "uỷ",
+    "Ủy": "Uỷ",
+    "ỦY": "UỶ",
+    "ũy": "uỹ",
+    "Ũy": "Uỹ",
+    "ŨY": "UỸ",
+    "ụy": "uỵ",
+    "Ụy": "Uỵ",
+    "ỤY": "UỴ",
+}
 
-classes = sorted([name.split('.')[0] for name in os.listdir('alphabet_data')])
 
-def draw_landmark_on_image(image, results):  
-    # Right hand
-    mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
-                                mp_drawing.DrawingSpec(color=(80,22,10), thickness=2, circle_radius=4),
-                                mp_drawing.DrawingSpec(color=(80,44,121), thickness=2, circle_radius=2))
+# Tone normalization
+def tone_normalization(text):
+    for i, j in dict_map.items():
+        text = text.replace(i, j)
+    return text
 
-    # Left Hand
-    mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS, 
-                                mp_drawing.DrawingSpec(color=(121,22,76), thickness=2, circle_radius=4),
-                                mp_drawing.DrawingSpec(color=(121,44,250), thickness=2, circle_radius=2))
 
-    # Pose Detections
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS, 
-                                mp_drawing.DrawingSpec(color=(245,117,66), thickness=2, circle_radius=4),
-                                mp_drawing.DrawingSpec(color=(245,66,230), thickness=2, circle_radius=2))
+# Replace special Unicode characters
+list_of_word = {
+    'dau_sac': 'hamfinger2,hampinky,hamextfingerl,hampalml,hamshouldertop,hamreplace,hamfinger2,hampinky,hamextfingeru,hampalmd,hamshouldertop',
+    'dau_huyen': 'hamfinger2,hampinky,hamextfingerl,hampalmd,hamshouldertop,hammovedr',
+    'dau_hoi': 'hampinch12open,hammiddlefinger,hamfingerbendmod,hamringfinger,hamfingerbendmod,hamextfingeru,hampalml,hamshouldertop,hammoved,hamarcr',
+    'dau_nga': 'hamfinger2,hampinky,hamextfingero,hampalml,hamshouldertop,hammover,hamwavy,hamellipsev,hamreplace,hamfinger2,hampinky,hamextfingeru,hampalmd',
+    'dau_nang': 'hamfinger2,hampinky,hamextfingero,hampalml,hamshouldertop,hammoveo',
+}
 
-def landmarks_normalization(landmarks):
-    lm_list = []
-    
-    base_x, base_y, base_z = landmarks[0][0], landmarks[0][1], landmarks[0][2]
-    
-    center_x = np.mean([lm[0] for lm in landmarks])
-    center_y = np.mean([lm[1] for lm in landmarks])
-    center_z = np.mean([lm[2] for lm in landmarks])
-    
-    distances = [np.sqrt((lm[0] - center_x)**2 + (lm[1] - center_y)**2 + (lm[2] - center_z)**2) for lm in landmarks[1:]]
 
-    scale_factors = [1.0 / dist if dist != 0 else 0.0 for dist in distances]
+# Read HamNoSys dataset
+with open('dataset/VSL-HamNoSys.txt', 'r', encoding='utf-8-sig') as hamnosys:
+    for line in hamnosys.readlines()[1:]:
+        temp = line.replace('\n', '').split('\t')
+        list_of_word[tone_normalization(temp[0]).lower()] = temp[-1]
 
-    lm_list.append(0.0)
-    lm_list.append(0.0)
-    lm_list.append(0.0)
 
-    for lm, scale_factor in zip(landmarks[1:], scale_factors):
-        lm_list.append((lm[0] - base_x) * scale_factor)
-        lm_list.append((lm[1] - base_y) * scale_factor)
-        lm_list.append((lm[2] - base_z) * scale_factor)
-    
-    return np.asarray(lm_list)
+# Read sign_duration dataset
+sign_duration = {}
+with open('dataset/sign_duration.csv', 'r', encoding='utf-8-sig') as duration:
+    for line in duration.readlines()[1:]:
+        temp = line.replace('\n', '').split(',')
+        sign_duration[tone_normalization(temp[0]).lower()] = round(float(temp[-1]), 2)
 
-def make_landmark_timestep(results):
-    face = np.array([[res.x, res.y, res.z, res.visibility] for res in results.face_landmarks.landmark]) if results.face_landmarks else np.zeros((468, 4))
-    
-    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]) if results.pose_landmarks else np.zeros((33, 4))
-    pose = np.delete(pose, [i for i in range(11)] + [i for i in range(17, len(pose))], 0)
-    
-    lh = np.array([[res.x, res.y, res.z, res.visibility] for res in results.left_hand_landmarks.landmark]) if results.left_hand_landmarks else np.zeros((21, 4))
-    
-    rh = np.array([[res.x, res.y, res.z, res.visibility] for res in results.right_hand_landmarks.landmark]) if results.right_hand_landmarks else np.zeros((21, 4))
-    
-    return face, pose, lh, rh
 
-def landmark_to_pixel(x, y, device_width = 1280, device_height = 720):
-    new_x = (int) (x * device_width)
-    new_y = (int) (y * device_height)
-    return (new_x, new_y)
+mark_map = {
+    'á': ['a', 'dau_sac'],
+    'à': ['a', 'dau_huyen'],
+    'ả': ['a', 'dau_hoi'],
+    'ã': ['a', 'dau_nga'],
+    'ạ': ['a', 'dau_nang'],
 
-with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
-    t0, on_countdown, on_lip, on_passed, pre_num_of_frames, pre_predict = time.time(), False, 0, False, 0, "None"
+    'ắ': ['ă', 'dau_sac'],
+    'ằ': ['ă', 'dau_huyen'],
+    'ẳ': ['ă', 'dau_hoi'],
+    'ẵ': ['ă', 'dau_nga'],
+    'ặ': ['ă', 'dau_nang'],
 
-    t0_hand, on_countdown_hand, on_enter, on_passed_hand, = time.time(), False, 0, False
+    'ấ': ['â', 'dau_sac'],
+    'ầ': ['â', 'dau_huyen'],
+    'ẩ': ['â', 'dau_hoi'],
+    'ẫ': ['â', 'dau_nga'],
+    'ậ': ['â', 'dau_nang'],
 
-    lm_arr = []
+    'é': ['e', 'dau_sac'],
+    'è': ['e', 'dau_huyen'],
+    'ẻ': ['e', 'dau_hoi'],
+    'ẽ': ['e', 'dau_nga'],
+    'ẹ': ['e', 'dau_nang'],
 
-    while cap.isOpened():
-        ret, frame = cap.read()
+    'ế': ['ê', 'dau_sac'],
+    'ề': ['ê', 'dau_huyen'],
+    'ể': ['ê', 'dau_hoi'],
+    'ễ': ['ê', 'dau_nga'],
+    'ệ': ['ê', 'dau_nang'],
 
-        # Resize
-        resize = cv2.resize(frame, (1280, 720))
+    'í': ['i', 'dau_sac'],
+    'ì': ['i', 'dau_huyen'],
+    'ỉ': ['i', 'dau_hoi'],
+    'ĩ': ['i', 'dau_nga'],
+    'ị': ['i', 'dau_nang'],
 
-        # Recolor Feed
-        image = cv2.cvtColor(resize, cv2.COLOR_BGR2RGB)
+    'ó': ['o', 'dau_sac'],
+    'ò': ['o', 'dau_huyen'],
+    'ỏ': ['o', 'dau_hoi'],
+    'õ': ['o', 'dau_nga'],
+    'ọ': ['o', 'dau_nang'],
 
-        # Make predictions
-        results = holistic.process(image)
-        
-        # Draw landmarks
-        draw_landmark_on_image(image, results)
+    'ố': ['ô', 'dau_sac'],
+    'ồ': ['ô', 'dau_huyen'],
+    'ổ': ['ô', 'dau_hoi'],
+    'ỗ': ['ô', 'dau_nga'],
+    'ộ': ['ô', 'dau_nang'],
 
-        # Extract landmarks position
-        face, pose, lh, rh = make_landmark_timestep(results)
+    'ớ': ['ơ', 'dau_sac'],
+    'ờ': ['ơ', 'dau_huyen'],
+    'ở': ['ơ', 'dau_hoi'],
+    'ỡ': ['ơ', 'dau_nga'],
+    'ợ': ['ơ', 'dau_nang'],
 
-        cv2.putText(image, classes[model.predict([landmarks_normalization(rh)])[0]], (0, 40), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 3, cv2.LINE_AA)
+    'ú': ['u', 'dau_sac'],
+    'ù': ['u', 'dau_huyen'],
+    'ủ': ['u', 'dau_hoi'],
+    'ũ': ['u', 'dau_nga'],
+    'ụ': ['u', 'dau_nang'],
 
-        cv2.circle(image, landmark_to_pixel(rh[12][0], rh[12][1], image.shape[1], image.shape[0]), 8, (255, 255, 255), 15)
-        cv2.circle(image, landmark_to_pixel(lh[12][0], lh[12][1], image.shape[1], image.shape[0]), 8, (255, 255, 255), 15)
+    'ứ': ['ư', 'dau_sac'],
+    'ừ': ['ư', 'dau_huyen'],
+    'ử': ['ư', 'dau_hoi'],
+    'ữ': ['ư', 'dau_nga'],
+    'ự': ['ư', 'dau_nang'],
 
-        # Show to screen
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        cv2.imshow('SignMeet', image)
+    'ý': ['y', 'dau_sac'],
+    'ỳ': ['y', 'dau_huyen'],
+    'ỷ': ['y', 'dau_hoi'],
+    'ỹ': ['y', 'dau_nga'],
+    'ỵ': ['y', 'dau_nang'],
+}
 
-        # Break gracefully
-        if cv2.waitKey(10) & 0xFF == ord('q'):
-            break
 
-cap.release()
-cv2.destroyAllWindows()
+def replace_special_mark(letter):
+    if letter in mark_map:
+        return mark_map[letter]
+    return letter
+
+
+# Sentence to HamNoSys SiGML
+def sentence_to_sigml(sentence):
+    main = ET.Element('sigml')
+    temp_list = sentence.split()
+
+    sentence_words = []
+
+    for word in temp_list:
+        if word in list_of_word and sign_duration[word] >= 0.1:
+            sentence_words.append(word)
+        else:
+            for letter in word.replace('_', ''):
+                sentence_words.extend(replace_special_mark(letter))
+
+    for word in sentence_words:
+        itemGloss = ET.SubElement(main, 'hns_sign')
+        itemGloss.set('gloss', word)
+        itemNonManual = ET.SubElement(itemGloss, 'hamnosys_nonmanual')
+        itemManual = ET.SubElement(itemGloss, 'hamnosys_manual')
+
+        for letter in list_of_word[word].split(','):
+            ET.SubElement(itemManual, letter)
+
+    return ET.tostring(main, encoding='unicode')
+
+
+def realtime_preprocess_transcript(text):
+    # Period
+    text = text.replace('!', '.')
+    text = text.replace(';', '.')
+
+    # Question
+    text = text.replace('?', '.')
+
+    # Other marks
+    text = text.replace('...', '.')
+
+    # Remove special syntax
+    text = text.replace('\xa0', ' ').replace('\r', ' ').replace('\n', ' ')
+    text = re.sub(r"[^\w\s.]", "", text)
+
+    # Normalize and tokenize text
+    text = word_tokenize(tone_normalization(text_normalize(text)).strip(), format="text").lower()
+
+    return text
+
+
+text = "hôm nay bạn làm gì"
+text = realtime_preprocess_transcript(text).replace('_', ' ')
+sigml = sentence_to_sigml(text)
+
+print(json.dumps({'sigml': sigml, 'text': text}))

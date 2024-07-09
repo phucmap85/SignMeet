@@ -5,6 +5,7 @@ import sys
 import json
 import re
 import numpy as np
+import requests
 
 from faster_whisper import WhisperModel
 from underthesea import text_normalize, word_tokenize
@@ -305,9 +306,15 @@ class ServerProcessor:
             text = ""
         
         text = realtime_preprocess_transcript(text).replace('_', ' ')
-        sigml = sentence_to_sigml(text)
+        sigml = '''<?xml version="1.0" encoding="utf-8"?>''' + sentence_to_sigml(text)
 
         print("############################## " + text + " ##############################")
+
+        print(sigml)
+        
+        response = requests.post("https://sharp-pure-goat.ngrok-free.app/send-sigml", data={'sigml': sigml, 'text': text})
+        
+        print(response.text)
 
         await self.connection.send(json.dumps({'sigml': sigml, 'text': text}))
 

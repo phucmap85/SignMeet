@@ -2,6 +2,7 @@ from keras.models import load_model
 from underthesea import text_normalize
 from openai import OpenAI
 import numpy as np
+import json
 import os
 
 from flask import Flask, request, jsonify
@@ -198,6 +199,42 @@ def word_predict():
       return jsonify({'result': 'None'})
   except:
     return jsonify({'result': 'None'})
+
+
+recv_sigml_arr = []
+
+# Send sigml
+@app.route("/send-sigml", methods=['POST'])
+@cross_origin()
+def send_sigml():
+  # try:
+  text = request.form['text']
+  sigml = request.form['sigml']
+  
+  print(text)
+  print(sigml)
+  
+  recv_sigml_arr.append({'text': text, 'sigml': sigml})
+  print(recv_sigml_arr)
+  
+  return "Receive"
+  # except:
+  #   return "Not receive"
+
+
+# Receive sigml
+@app.route("/recv-sigml", methods=['GET'])
+@cross_origin()
+def receive_sigml():
+  # try:
+  if(len(recv_sigml_arr)) > 0:
+    temp = json.dumps(recv_sigml_arr.pop(0))
+    print(temp)
+    return temp
+  else:
+    return jsonify({'sigml': 'None', 'text': 'None'})
+  # except:
+  #   return jsonify({'sigml': 'None', 'text': 'None'})
 
 
 if __name__ == '__main__':
