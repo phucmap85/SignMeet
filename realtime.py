@@ -312,9 +312,9 @@ class ServerProcessor:
 
         print(sigml)
         
-        response = requests.post("https://sharp-pure-goat.ngrok-free.app/send-sigml", data={'sigml': sigml, 'text': text})
-        
-        print(response.text)
+        if(len(text) > 0):
+            response = requests.post("https://sharp-pure-goat.ngrok-free.app/send-sigml", data={'sigml': sigml, 'text': text})
+            print(response.text)
 
         await self.connection.send(json.dumps({'sigml': sigml, 'text': text}))
 
