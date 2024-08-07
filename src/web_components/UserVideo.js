@@ -29,7 +29,6 @@ class UserVideo extends Component {
         this.state = {
             signWord: ''
         }
-        this.webcamRef = createRef();
         this.canvasRef = createRef();
         this.camera = null;
         
@@ -114,8 +113,8 @@ class UserVideo extends Component {
     }
 
     onResults = (results) => {
-        const videoWidth = this.webcamRef.current.video.videoWidth;
-        const videoHeight = this.webcamRef.current.video.videoHeight;
+        const videoWidth = this.props.videoRef.current.videoWidth;
+        const videoHeight = this.props.videoRef.current.videoHeight;
 
         let timeStep = this.makeLandmarkTimestep(results);
         this.n_frames += 1;
@@ -159,54 +158,6 @@ class UserVideo extends Component {
                 (lm_arr = []).length = 0;
             }
         }
-
-        /* Movement detection
-        if(this.n_frames - this.p_frames > 2) {
-            if(this.p_landmarks.length > 0) {
-                let temp = 0;
-                for(let i = 0; i < pose.length; i++) {
-                    if(pose[i][3] > 0.3) {
-                        temp += hamming_dist(pose[i][0], pose[i][1], this.p_landmarks[i][0], this.p_landmarks[i][1]);
-                    }
-                }
-                this.threshold = temp > 0.1;
-            }
-            
-            (this.p_landmarks = []).length = 0;
-
-            for(let i = 0; i < pose.length; i++) {
-                this.p_landmarks.push([pose[i][0], pose[i][1]]);
-            }
-
-            this.p_frames = this.n_frames;
-        }
-
-        if(this.threshold) this.keep_state = true;
-        else {
-            if(this.keep_state) {
-                this.false_cnt += 1;
-                if(this.false_cnt > 6) {
-                    this.keep_state = false;
-                    this.false_cnt = 0;
-                }
-            }
-        }
-
-        console.log(this.keep_state);
-
-        if (this.keep_state) {
-            let temp_pose = pose.flat(), temp_lh = lh.flat(), temp_rh = rh.flat();
-            lm_arr.push(temp_pose.concat(temp_lh, temp_rh));
-        } else {
-            if (lm_arr.length > 0) {
-                this.pre_num_of_frames = lm_arr.length;
-                console.log(this.pre_num_of_frames, lm_arr);
-
-                this.sendHTTPReq(lm_arr);
-
-                (lm_arr = []).length = 0;
-            }
-        } */
 
         // Check if user click enter
         let new_x_hand = landmark_to_pixel(rh[12][0], rh[12][1]).new_x;
@@ -320,6 +271,7 @@ class UserVideo extends Component {
 
 
     componentDidMount() {
+        console.dir(this.props.videoRef)
         const holistic = new Holistic({
             locateFile: (file) => {
                 return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
@@ -334,10 +286,10 @@ class UserVideo extends Component {
 
         holistic.onResults(this.onResults)
 
-        if (typeof this.webcamRef.current !== "undefined" && this.webcamRef.current !== null) {
-            this.camera = new cam.Camera(this.webcamRef.current.video, {
+        if (typeof this.props.videoRef.current !== "undefined" && this.props.videoRef.current !== null) {
+            this.camera = new cam.Camera(this.props.videoRef.current, {
                 onFrame: async () => {
-                    await holistic.send({ image: this.webcamRef.current.video });
+                    await holistic.send({ image: this.props.videoRef.current });
                 },
                 width: 1280,
                 height: 720,
@@ -350,8 +302,9 @@ class UserVideo extends Component {
     render() {
         return (
             <div id='user-video'>
-                <Webcam ref={this.webcamRef} width={1280} height={720} hidden style={{ position: "absolute" }} />
+                {/* <Webcam ref={this.props.videoRef} width={1280} height={720} hidden style={{ position: "absolute" }} /> */}
                 <canvas ref={this.canvasRef} style={{ borderRadius: "2%" }} />
+                <video id="user-video" ref={this.props.videoRef} autoPlay muted hidden style={{ position: "absolute" }}></video>
                 <h1 style={{ transform: "rotateY(180deg)", color: "white" }}>{this.state.signWord}</h1>
             </div>
         );

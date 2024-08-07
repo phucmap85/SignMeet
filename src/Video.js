@@ -823,7 +823,7 @@ class Video extends Component {
 							<Row id="main" className="video-container">
 								{this.state.userType === 1 ?
 									<div id='user'>
-										<UserVideo onDataReceived={this.handleSignWordChange} onSendSignWord={this.handleSendSignSen} />
+										<UserVideo videoRef={this.localVideoref} onDataReceived={this.handleSignWordChange} onSendSignWord={this.handleSendSignSen} />
 										<div id='sign-word-text' style={{
 											background: "white", position: "absolute", bottom: "0.8em",
 											width: "calc(100% - 20px)", borderRadius: "10px",
