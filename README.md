@@ -9,9 +9,10 @@ SignMeet: Assistive communication system for the deaf
   </a>
 </p>
 
-<!-- <p align="center">
-<img src="https://github.com/PL508/Vi2VSL/assets/58034112/127a0dfb-029b-4993-ba9e-50c94e7487c5"/>
-</p> -->
+<p align="center">
+<img src="https://github.com/user-attachments/assets/d90b6938-3866-4782-966d-974d35aee661"/>
+</p>
+
 
 ## Installation
 
